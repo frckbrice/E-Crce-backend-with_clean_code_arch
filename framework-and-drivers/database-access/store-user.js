@@ -14,7 +14,7 @@ module.exports = async function makeUser({ dbConnection }) {
 
     async function findAllUsers() {
         const db = await dbConnection()
-        const result = await db.collection('comments').find({})
+        const result = await db.collection('users').find({})
         return (await result.toArray()).map(({ _id: id, ...found }) => ({
             id,
             ...found
@@ -23,7 +23,7 @@ module.exports = async function makeUser({ dbConnection }) {
 
     async function findUserById() {
         const db = await dbConnection()
-        const result = await db.collection('comments').find({ _id })
+        const result = await db.collection('users').find({ _id })
         const found = await result.toArray()
         if (found.length === 0) {
             return null
@@ -35,7 +35,7 @@ module.exports = async function makeUser({ dbConnection }) {
     async function createUser({ id: _id = Id.makeId(), ...userData }) {
         const db = await dbConnection()
         const result = await db
-            .collection('comments')
+            .collection('users')
             .insertOne({ _id, ...userData })
         const { _id: id, ...insertedInfo } = result.ops[0]
         return { id, ...insertedInfo }
@@ -44,14 +44,14 @@ module.exports = async function makeUser({ dbConnection }) {
     async function updateUser({ id: _id, userData }) {
         const db = await dbConnection()
         const result = await db
-            .collection('comments')
+            .collection('users')
             .updateOne({ _id }, { $set: { ...userData } })
         return result.modifiedCount > 0 ? { id: _id, ...userData } : null
     }
 
     async function deleteUser({ id: _id }) {
         const db = await dbConnection()
-        const result = await db.collection('comments').deleteOne({ _id })
+        const result = await db.collection('users').deleteOne({ _id })
         return result.deletedCount
     }
 }

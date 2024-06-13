@@ -1,4 +1,5 @@
 const MongoClient = require("mongodb").MongoClient;
+const { logEvents } = require("../../middlewares/loggers/logger")
 module.exports = {
 
     connection: async () => {
@@ -13,6 +14,10 @@ module.exports = {
             await client.connect();
         } catch (err) {
             console.log("error connecting to database", err);
+            logEvents(
+                `${err.no}:${err.code}\t${err.syscall}\t${err.hostname}`,
+                "mongoErrLog.log"
+            );
         }
 
         // Provide the name of the database and collection you want to use.
