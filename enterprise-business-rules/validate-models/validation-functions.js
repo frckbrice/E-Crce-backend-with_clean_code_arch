@@ -83,6 +83,23 @@ async function validatePassword(password) {
     return hashPw;
 }
 
+// Validate role of the user, either user or admin
+const validRoles = new Set(["user", "admin"]);
+function validateRole(roles) {
+     // make role always an array
+  
+    if (!validRoles.has(roles)) {
+        throw new InvalidPropertyError(
+            `A user's role must be either 'user' or 'admin'.`
+        )
+    }
+
+    if (!Array.isArray(roles)) {
+        roles = [roles];
+    }
+    return roles;
+}
+
 /**
  * Validates user data by calling individual validation functions for each field.
  *
@@ -92,6 +109,7 @@ async function validatePassword(password) {
  * @param {string} userData.email - The user's email address.
  * @param {string} userData.mobile - The user's mobile number.
  * @param {string} userData.password - The user's password.
+ * @param {string} userData.role - The user's role.
  * @return {Object} An object containing the validation results for each field.
  * - firstName: The result of validating the first name.
  * - lastName: The result of validating the last name.
@@ -99,12 +117,14 @@ async function validatePassword(password) {
  * - mobile: The result of validating the mobile number.
  * - password: The result of validating the password.
  */
-async function validateUserData({firstName, lastName, email, mobile, password}) {
+async function validateUserData({firstName, lastName, email, mobile, password, roles}) {
     const errors = [];
 
     if (!firstName && !lastName) errors.push('user must have a first name or last name.');
     if (!email) errors.push('user must have an email.');
     if (!password) errors.push('user must have a password.');
+    if(!roles) errors.push('user must have a role');
+    if(typeof active !== "boolean") errors.push('user must have an active status');
 
     if (errors.length) {
         throw new InvalidPropertyError(errors.join(', '));
@@ -116,6 +136,8 @@ async function validateUserData({firstName, lastName, email, mobile, password}) 
         password: await validatePassword(password),
         firstName: firstName ? validateName(firstName) : "",
         lastName: lastName ? validateName(lastName) : "",
+        roles: validateRole(roles),
+        active: active,
     };
 }
 
