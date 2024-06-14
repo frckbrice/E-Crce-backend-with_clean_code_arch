@@ -2,8 +2,8 @@ const { UniqueConstraintError, InvalidPropertyError, RequiredParameterError } = 
 const {makeHttpError} = require("../../config/validators-errors/http-error");
 
 module.exports = {
-    createUserHandler: ({ addUser }) => {
-        return async function createUserController(httpRequest) {
+    registerUserController: ({ registerUserUserCaseHandler }) => {
+        return async function createUserControllerHandler(httpRequest) {
 
             const userData =  { firstName,
                 lastName,
@@ -31,7 +31,7 @@ module.exports = {
             }
 
             try {
-                const contact =await addUser(userInfo ?? userData);
+                const contact =await registerUserUserCaseHandler(userInfo ?? userData);
                 return {
                     headers: {
                         'Content-Type': 'application/json'

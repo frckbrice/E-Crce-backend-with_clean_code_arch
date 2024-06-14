@@ -1,6 +1,7 @@
 
 const { InvalidPropertyError } = require("../../interface-adapters/config/validators-errors/errors");
 const bcrypt = require("bcrypt");
+const { makeHttpError } = require("../../interface-adapters/config/validators-errors/http-error");
 
 
 
@@ -26,7 +27,7 @@ function validateEmail(email) {
  * @throws {InvalidPropertyError} If the name is less than 2 characters long.
  * @return {string} The validated name with '<' characters replaced, or 'No Name' if the name is falsy.
  */
-function validateName(name) {
+function validateName(name = "") {
     if (name.length < 2) {
         throw new InvalidPropertyError(
             `A user's name must be at least 2 characters long.`
@@ -98,32 +99,23 @@ async function validatePassword(password) {
  * - mobile: The result of validating the mobile number.
  * - password: The result of validating the password.
  */
-async function validateUserData({
-    firstName,
-    lastName,
-    email,
-    mobile,
-    password
-}) {
+async function validateUserData({firstName, lastName, email, mobile, password}) {
+    const errors = [];
 
-    if (!firstName && !lastName) {
-        return res.status(400).json({ msg: 'user  must have at least one name.' })
-    }
+    if (!firstName && !lastName) errors.push('user must have a first name or last name.');
+    if (!email) errors.push('user must have an email.');
+    if (!password) errors.push('user must have a password.');
 
-    if (!email) {
-        return res.status(400).json({ msg: 'user must have an email.' })
-    }
-
-    if (!password) {
-        return res.status(400).json({ msg: 'user must have a password.' })
+    if (errors.length) {
+        throw new InvalidPropertyError(errors.join(', '));
     }
 
     return {
         email: validateEmail(email),
-        mobile: validatePhone(mobile),
+        mobile: mobile ? validatePhone(mobile) : "",
         password: await validatePassword(password),
-        firstName: validateName(firstName),
-        lastName: validateName(lastName),
+        firstName: firstName ? validateName(firstName) : "",
+        lastName: lastName ? validateName(lastName) : "",
     };
 }
 

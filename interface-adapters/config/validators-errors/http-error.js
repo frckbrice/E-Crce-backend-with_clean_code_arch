@@ -1,5 +1,5 @@
 module.exports = {
-  makeHttpError: ({ statusCode, errorMessage })  => {
+  makeHttpError: ({ statusCode, errorMessage, stack })  => {
     return {
       headers: {
         'Content-Type': 'application/json'
@@ -7,7 +7,8 @@ module.exports = {
       statusCode,
       data: JSON.stringify({
         success: false,
-        error: errorMessage
+        error: errorMessage,
+        stack
       })
     }
   }

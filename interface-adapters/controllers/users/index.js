@@ -1,8 +1,12 @@
-const {createUserHandler} = require("./create-user");
-const {addUser} = require("../../../application-business-rules/use-cases/user")
+const {registerUserController} = require("./create-user");
+const {registerUserUserCaseHandler, loginUserUseCaseHandler} = require("../../../application-business-rules/use-cases/user");
+const {loginUserController} = require("./login-user");
 
-const createUserController = createUserHandler({addUser})
+
+const createUserControllerHandler = registerUserController({registerUserUserCaseHandler});
+const loginUserControllerHandler = loginUserController({loginUserUseCaseHandler});
 
 module.exports = {
-    createUserController,
+    createUserControllerHandler,
+    loginUserControllerHandler
 }

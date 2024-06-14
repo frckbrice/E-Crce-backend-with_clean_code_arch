@@ -5,6 +5,7 @@ const path = require('path');
 const { dbconnection } = require('./framework-and-drivers/database-access/db-connection.js');
 const errorHandler = require('./interface-adapters/middlewares/loggers/errorHandler.js');
 const router = require('./routes/auth-user.router.js');
+const { NotFound, ErrorHandlerMiddleware } = require('./interface-adapters/config/validators-errors/errors.js');
 
 
 const app = express();
@@ -48,9 +49,11 @@ app.use((req, res, next) => {
 
 
 app.use(errorHandler);
+app.use(NotFound);
+app.use(ErrorHandlerMiddleware);
 
 // databae connetion call function
 dbconnection().then((db) => {
     console.log("database connected: ", db.databaseName);
-})
+});
 app.listen(PORT, () => console.log(`Server started on port http://localhost:${PORT}`));
