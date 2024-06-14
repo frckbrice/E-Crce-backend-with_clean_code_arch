@@ -1,6 +1,6 @@
-const dbConnection = require("./db-connection");
+const {dbconnection} = require("./db-connection");
 const makeUserdb = require("./store-user")
 
-const userUseCase = makeUserdb({dbConnection});
+const dbUserHandler = makeUserdb({dbconnection});
 
-module.exports = userUseCase;
+module.exports = dbUserHandler;

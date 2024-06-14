@@ -1,0 +1,4 @@
+2024-06-13	20:24:07	336550bd-457e-41ba-a060-affdb80de11f	Error: ENOENT: no such file or directory, stat '/home/frckbrice/Documents/rebaseacademy2024/Nextjs/Business Project of Hollyday/digital-market-project-2/views/404.html'	POST	/*	undefined
+2024-06-13	21:12:25	b69fc749-982f-47d0-a029-80e347609471	TypeError: responseCallback(...).then is not a function	POST	/users/register	undefined
+2024-06-13	21:13:50	89cb43aa-219d-4df4-988b-cbb8c253e026	TypeError: responseCallback(...).then is not a function	POST	/users/register	undefined
+2024-06-13	21:14:09	056438b1-49e9-4914-a7c7-1020485f5441	TypeError: responseCallback(...).then is not a function	POST	/users/register	undefined

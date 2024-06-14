@@ -1,11 +1,11 @@
 const rateLimit = require('express-rate-limit');
 
-const logEvents = require('./logger');
+const logEvents = require('./loggers/logger');
 
 const loginLimiter = rateLimit({
   windowMs: 60 * 1000, // 1minute
 
-  max: 5, // max IP loggin requests /window/,min
+  max: 3, // max IP loggin requests /window/,min
 
   message: ' Too many loggin attempts for this IP address. Please try again in 60 seconds',
 

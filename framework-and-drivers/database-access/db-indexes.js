@@ -12,7 +12,7 @@ dotenv.config();
     .createIndexes([
       { key: { id: 1 }, name: 'userId_idx' },
       { key: { email: 1 }, name: 'email_idx' },
-    ])
+    ]);
   console.log(result)
   console.log('Database setup complete...')
   process.exit()

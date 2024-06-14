@@ -1,57 +1,75 @@
+const { ReturnDocument } = require("mongodb");
 
+async function findUserByEmail(email, dbconnection) {
 
-module.exports = async function makeUser({ dbConnection }) {
-
-
-    return Object.freeze({
-        findAllUsers,
-        findUserById,
-        createUser,
-        updateUser,
-        deleteUser
-    })
-
-
-    async function findAllUsers() {
-        const db = await dbConnection()
-        const result = await db.collection('users').find({})
+    const db = await dbconnection()
+    try {
+        const result = await db.collection('users').find({ email })
+        // const found = await result.toArray()
+        // console.log(" result from DB checking", result)
         return (await result.toArray()).map(({ _id: id, ...found }) => ({
             id,
             ...found
-        }))
+          })) 
+    } catch (error) {
+        console.log("error checking for thexistence of user in DB", error);
+        return null;
     }
+}
 
-    async function findUserById() {
-        const db = await dbConnection()
-        const result = await db.collection('users').find({ _id })
-        const found = await result.toArray()
-        if (found.length === 0) {
-            return null
-        }
-        const { _id: id, ...info } = found[0]
-        return { id, ...info }
-    }
+async function registerUser(userData, dbconnection) {
 
-    async function createUser({ id: _id = Id.makeId(), ...userData }) {
-        const db = await dbConnection()
+    const db = await dbconnection()
+    try {
+        //insert document and return the inserted document
         const result = await db
-            .collection('users')
-            .insertOne({ _id, ...userData })
-        const { _id: id, ...insertedInfo } = result.ops[0]
-        return { id, ...insertedInfo }
+        .collection('users')
+        .insertOne({...userData });
+        return result
+        
+    } catch (error) {
+        
+        console.log("error registering the user to DB: ", error);
+        if (error.code === 11000) {
+            throw new UniqueConstraintError(error.message)
+        } 
+        return null;
     }
+    
+}
 
-    async function updateUser({ id: _id, userData }) {
-        const db = await dbConnection()
-        const result = await db
-            .collection('users')
-            .updateOne({ _id }, { $set: { ...userData } })
-        return result.modifiedCount > 0 ? { id: _id, ...userData } : null
-    }
+  // async function findAllUsers() {
+    //     const db = await dbconnection()
+    //     const result = await db.collection('users').find({})
+    //     return (await result.toArray()).map(({ _id: id, ...found }) => ({
+    //         id,
+    //         ...found
+    //     }))
+    // }
 
-    async function deleteUser({ id: _id }) {
-        const db = await dbConnection()
-        const result = await db.collection('users').deleteOne({ _id })
-        return result.deletedCount
-    }
+
+    // async function updateUser({ id: _id, userData }) {
+    //     const db = await dbconnection()
+    //     const result = await db
+    //         .collection('users')
+    //         .updateOne({ _id }, { $set: { ...userData } })
+    //     return result.modifiedCount > 0 ? { id: _id, ...userData } : null
+    // }
+
+    // async function deleteUser({ id: _id }) {
+    //     const db = await dbconnection()
+    //     const result = await db.collection('users').deleteOne({ _id })
+    //     return result.deletedCount
+    // }
+
+
+module.exports = function makeUserdb({ dbconnection }) {
+
+    return Object.freeze({
+        // findAllUsers,
+        findUserByEmail: async({ email }) => findUserByEmail(email, dbconnection),
+        registerUser: async(userData) =>  registerUser(userData, dbconnection),
+        // updateUser,
+        // deleteUser
+    })
 }

@@ -1,0 +1,6 @@
+2024-06-14	09:15:57	49108d54-8264-43bb-a9a0-af97828bcb34	undefined:ETIMEOUT	querySrv	_mongodb._tcp.cluster1.syqo4c0.mongodb.net
+2024-06-14	09:16:07	3f41755e-b528-4ae8-8a8d-4df96ee3d3d0	undefined:ESERVFAIL	querySrv	_mongodb._tcp.cluster1.syqo4c0.mongodb.net
+2024-06-14	09:16:42	1f46edd7-119b-48d4-96f2-7586d5f4d48b	undefined:ESERVFAIL	querySrv	_mongodb._tcp.cluster1.syqo4c0.mongodb.net
+2024-06-14	09:17:29	36b32ffc-3ae9-4678-8db5-2991f28428b8	undefined:ESERVFAIL	querySrv	_mongodb._tcp.cluster1.syqo4c0.mongodb.net
+2024-06-14	09:17:57	c45d02a0-3750-441c-8969-6ee7ca7b69fc	undefined:ESERVFAIL	querySrv	_mongodb._tcp.cluster1.syqo4c0.mongodb.net
+2024-06-14	09:45:52	bc06f184-44ab-4acd-8e1a-2cc1133240c8	undefined:ESERVFAIL	querySrv	_mongodb._tcp.cluster1.syqo4c0.mongodb.net
