@@ -1,9 +1,10 @@
-const { makeUser } = require("../../../enterprise-business-rules/entities");
+const { makeUser, validateId, validateUserDataUpdates } = require("../../../enterprise-business-rules/entities");
 const { UniqueConstraintError, InvalidPropertyError,RequiredParameterError } = require("../../../interface-adapters/config/validators-errors/errors");
 const { makeHttpError } = require("../../../interface-adapters/config/validators-errors/http-error");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcrypt");
-const NotFoundError = require("../../../interface-adapters/config/validators-errors/errors");
+const { logEvents } = require("../../../interface-adapters/middlewares/loggers/logger");
+
 
 module.exports = {
 
@@ -17,21 +18,24 @@ module.exports = {
    */
   registerUserUseCase: ({ dbUserHandler }) => async function registerUserUseCaseHandler(userData){
     try {
-      const validatedUser = await makeUser(userData);
-      const existingUser = await dbUserHandler.findUserByEmail(validatedUser);
-
-      if (existingUser.length > 0) {
-        throw new makeHttpError({
-          errorMessage: "user already exists",
-          statusCode: 409
-        });
+      const validatedUser = await makeUser({userData});
+      const {email} = validatedUser;
+      const existingUser = await dbUserHandler.findUserByEmail({email});
+     
+      if (existingUser) {
+        throw new UniqueConstraintError(`User with email ${email} already exists`);
+      }else{
+        return await dbUserHandler.registerUser(validatedUser);
       }
 
-      return await dbUserHandler.registerUser(validatedUser);
-    } catch (error) {
-      console.log(error);
-      throw new makeHttpError({
-        errorMessage: error.message,
+    } catch (err) {
+      console.log("error from register use case handler: ", err);
+      logEvents(
+        `${err.no}:${error.code}\t${error.syscall}\t${error.hostname}`,
+        "useCaseHandlerErr.log"
+    );
+      throw makeHttpError({
+        errorMessage: err.message,
         statusCode: 400
       });
     }
@@ -62,34 +66,41 @@ module.exports = {
         try {
              //check the existance of this user in DB
         let existingUser = await dbUserHandler.findUserByEmailForLogin({email});
-  
-        if (!existingUser.id) {
-          throw new Error("user not found");
+        console.log(" checking for the xistence of user in loginUserUseCaseHandler", existingUser);
+        if (!existingUser?.id) {
+        throw new Error("USER NOT FOUND! LOGGIN FIRST");
         }
   
         //check the password
-        const matchPasswd = await bcrypt.compare(password, existingUser[0].password);
+        const matchPasswd = await bcrypt.compare(password, existingUser.password);
         if (!matchPasswd) {
           throw new InvalidPropertyError("No Matching! UNAUTHORIZED");
         }
   
         //create the JWT
         const accessToken = jwt.sign({ 
-          id: existingUser.id, 
+          id: existingUser?.id, 
           email,
-          roles: existingUser.roles }, process.env.JWT_SECRET, {
+          roles: existingUser?.roles }, process.env.ACCESS_TOKEN_SECRETKEY, {
           expiresIn: process.env.JWT_EXPIRES_IN
         });
   
         //create refresh token 
-        // const refreshToken = jwt.sign({ email }, process.env.JWT_REFRESH_SECRET, {
-        //   expiresIn: process.env.JWT_REFRESH_EXPIRES_IN
-        // });
+        const refreshToken = jwt.sign({ email }, process.env.JWT_REFRESH_SECRET, {
+          expiresIn: process.env.JWT_REFRESH_EXPIRES_IN
+        });
   
         // return tokens: access and refresh to renew the accesstoken when expires
-        return {accessToken, refreshToken : ""};
+        return {
+          accessToken: accessToken, 
+          refreshToken : refreshToken
+        };
         } catch (error) {
-          console.log("login error", error);
+          console.log("error from login use case: ", error);
+          logEvents(
+            `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+            "useCaseHandlerErr.log"
+        );
           throw new Error(" failed to login: ", error.stack);
         }
      
@@ -109,9 +120,13 @@ module.exports = {
       return async function findAllUsersUseCaseHandler() {
         try {
           const allUsers = await dbUserHandler.findAllUsers();
-          console.log(allUsers);
+          
           return allUsers || [];
         } catch (error) {
+          logEvents(
+            `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+            "useCaseHandlerErr.log"
+        );
           throw new Error("Error fetching all users: " + error.stack);
         }
       }
@@ -127,9 +142,12 @@ module.exports = {
    */
     findOneUserUseCase: ({dbUserHandler}) => {
       return async function findOneUserUseCaseHandler({userId, email}) {
+
+        const newId = validateId(userId);
+        const validEmail = validateUserDataUpdates({email});
         try {
           if(email) { // email defined
-            const user = await dbUserHandler.findUserByEmail({email});
+            const user = await dbUserHandler.findUserByEmail({email: validEmail});
             
             if (!user) {
               throw  new Error("user not found");
@@ -137,13 +155,18 @@ module.exports = {
             return user;
           }
           //for userID defined
-          const user = await dbUserHandler.findUserById({id: userId});
+          const user = await dbUserHandler.findUserById({id: newId});
           if (!user) {
             throw  new Error(`user with id ${userId} not found`);
           }
           return user;
         } catch (error) {
-          throw new Error("Error fetching user: " + error.stack);
+          console.log("Error from fetching user  use case handler: ", error);
+          logEvents(
+            `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+            "useCaseHandlerErr.log"
+        );
+          throw new Error("Error fetching user use case: " + error.stack);
         }
       }
     },
@@ -158,30 +181,39 @@ module.exports = {
    * @throws {new Error} If the user is not found.
    */
     updateUserUseCase: ({dbUserHandler}) => async function updateUserUseCaseHandler({userId, ...userData}) {
+      
+      const newId = validateId(userId);
       try {
         if(!userId){
           throw new RequiredParameterError("id not found");
         }
 
         // check first if the user exist
-        const user = await dbUserHandler.findUserById({id:userId});
+        const user = await dbUserHandler.findUserById({id:newId});
         if (!user) {
           throw new Error("Cannot update. User not exist. register first");
         }
 
         // check for duplicate user
         const duplicateUser = await dbUserHandler.findUserByEmail({email: userData.email});
-        if (duplicateUser.length > 0 && duplicateUser[0].id.toString() !== userId.toString()) {
-          throw  new makeHttpError({
+        if (duplicateUser && duplicateUser.id.toString() !== userId.toString()) {
+          throw  makeHttpError({
             errorMessage: "user already exists",
             statusCode: 409
           });;
         }
 
+        // validate user data
+        const validatedUserData = makeUser({userData, update:true});
         //update user
-        const updatedUser = await dbUserHandler.updateUser({id:userId, ...userData});
+        const updatedUser = await dbUserHandler.updateUser({id:newId, ...validatedUserData});
         return updatedUser;
       } catch (error) {
+        console.log("Error from updating  use case handler: ", error);
+        logEvents(
+          `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+          "useCaseHandlerErr.log"
+      );
         throw new Error("Error updating user: " + error.stack);
       }
     },
@@ -196,24 +228,30 @@ module.exports = {
    * @throws {new Error} If the user is not found.
    */
     deleteUserUseCase: ({dbUserHandler}) => {
-      return async function deleteUserUseCaseHandler({id}) {
+      return async function deleteUserUseCaseHandler({userId}) {
   
+        const newId = validateId(userId);
         try {
-          if(!id){
+          if(!userId){
             throw new RequiredParameterError("id not found");
           }
 
           // check first if the user exist
-          const checkExistngUser = await dbUserHandler.findUserById({id});
-          if (!checkExistngUser.length>0) {
+          const checkExistngUser = await dbUserHandler.findUserById({id:newId});
+          if (!checkExistngUser) {
             throw  new Error("Cannot delete. User not exist. register first");
           }
-          const user = await dbUserHandler.deleteUser({id});
+          const user = await dbUserHandler.deleteUser({id:newId});
           if (!user) {
             throw  new Error("user not found");
           }
-          return { user };
+          return user;
         } catch (error) {
+          console.log("Error from deleting  use case handler: ", error);
+          logEvents(
+            `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+            "useCaseHandlerErr.log"
+        );
           throw new Error("Error deleting user: " + error.stack);
         }
       }
@@ -231,39 +269,43 @@ module.exports = {
    * @throws {Error} If there is an error refreshing the token.
    */
     refreshTokenUseCase: ({dbUserHandler}) => {
-      return async function refreshTokenUseCaseHandler(refreshToken) {
+      return async function refreshTokenUseCaseHandler({refreshToken}) {
+
         try {
-          if(!refreshToken){
-            throw new RequiredParameterError("refreshToken not found");
-          }
+          console.log(`refreshToken: ${refreshToken}`);
           return jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET, async function(err, decoded) {
             if (err) {
-              throw new Error("user not found! UNAUTHORIZED");
+              console.log("from refresh handler: ",err )
+              throw new Error(err.message);
             }
             const user = await dbUserHandler.findUserByEmail({email: decoded.email});
             if (!user) {
-              throw new Error("user not found! UNAUTHORIZED");
+              throw new Error(err.message);
             }
   
             //recontruct new accessToken
             const accessToken = jwt.sign({ 
-              id: user[0].id, 
-              email: user[0].email,
-              roles: user[0].roles },
-              process.env.JWT_SECRET,
+              id: user.id, 
+              email: user.email,
+              roles: user.roles },
+              process.env.ACCESS_TOKEN_SECRETKEY,
             { expiresIn: process.env.JWT_EXPIRES_IN});
-
 
             return accessToken;
           });
         } catch (error) {
-          throw new Error("Error refreshing token: " + error.stack);
+          console.log("Error from refresh token use case handler: ", error);
+          logEvents(
+            `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+            "useCaseHandlerErr.log"
+        );
+          throw new Error("Error refreshing token: ", error);
         }
       }
     },
   
 
-        /**
+     /**
      * A description of the entire function.
      *
      * @param {string} refreshToken - The refresh token to be used for logout.
@@ -276,9 +318,74 @@ module.exports = {
             throw new RequiredParameterError("refreshToken not found");
           }
         } catch (error) {
-          throw new Error("Error refreshing token: " + error.stack);
+          console.log("Error from logoutUseCase user use case handler: ", error);
+          logEvents(
+            `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+            "useCaseHandlerErr.log"
+        );
+          throw new Error("Error logging out: " + error.stack);
         }
       }
     },
+
+    //block user
+    blockUserUseCase: ({dbUserHandler}) => {
+      return async function blockUserUseCaseHandler({userId}) {
+
+        const newId = validateId(userId);
+        
+        try {
+          if(!newId){
+            throw new RequiredParameterError("id not found");
+          } 
+          const user = await dbUserHandler.findUserById({id:newId});
+          if (!user) {
+            throw new Error("user not found");
+          }
+          const blockedUser = await dbUserHandler.updateUser({id:newId, isBlocked:true});
+          if (!blockedUser) {
+            throw new Error("user not found");
+          }
+          return blockedUser;
+        } catch (error) {
+          console.log("Error from block user use case handler: ", error);
+          logEvents(
+            `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+            "useCaseHandlerErr.log"
+        );
+          throw new Error("Error block user: " + error.stack);
+        }
+      }
+    },
+
+    //un-block user
+    unBlockUserUseCase: ({dbUserHandler}) => {
+      return async function unBlockUserUseCaseHandler({userId}) {
+
+        const newId = validateId(userId);
+
+        try {
+          if(!newId){
+            throw new RequiredParameterError("id not found");
+          } 
+          const user = await dbUserHandler.findUserById({id:newId});
+          if (!user) {
+            throw new Error("user not found");
+          }
+          const unBlockedUser = await dbUserHandler.updateUser({id:newId, isBlocked:false});
+          if (!unBlockedUser) {
+            throw new Error("user not found");
+          }
+          return unBlockedUser;
+        } catch (error) {
+          console.log("Error from unblock user use case handler: ", error);
+          logEvents(
+            `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+            "useCaseHandlerErr.log"
+        );
+          throw new Error("Error unblock user: " + error.stack);
+        }
+      }
+    }
   
 }

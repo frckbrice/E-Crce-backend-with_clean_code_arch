@@ -41,7 +41,11 @@ const NotFound = (req, res, next) => {
 
 const ErrorHandlerMiddleware = (err, req, res, next) => {
   const statusCode = res.statusCode || 500;
-  makeHttpError({ statusCode, errorMessage: err.message, stack: err.stack })
+  res.status(statusCode);
+  res.json({
+    message: err.message,
+    stack: process.env.NODE_ENV === 'production' ? null : err.stack
+  });
   next(err)
 }
 

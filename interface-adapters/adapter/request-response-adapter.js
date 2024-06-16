@@ -17,6 +17,7 @@ module.exports = {
         }
     };
 
+
       controller(httpRequest)
         .then(httpResponse => {
           console.log("response adapter: ", httpResponse) 
@@ -26,12 +27,15 @@ module.exports = {
 
           res
             .type('json')
-            .status(httpResponse.statusCode)
-            .send(httpResponse.data)
+            .status(httpResponse.statusCode || 400)
+            .send(httpResponse.data || "INTERNAL SERVER ERROR")
         })
-        .catch(e => res
-          .status(500)
-          .send({ error: 'An unkown error occurred.', error: e }))
+        .catch(e => {
+          res
+          .type('json')
+          .status(e.statusCode || 500)
+          .send({ error: 'An unkown error occurred.', error: e })
+        })
     }
   }
 

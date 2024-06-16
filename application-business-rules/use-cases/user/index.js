@@ -5,7 +5,9 @@ const {registerUserUseCase,
     loginUserUseCase,
     logoutUseCase,
     refreshTokenUseCase,
-    updateUserUseCase
+    updateUserUseCase,
+    blockUserUseCase,
+    unBlockUserUseCase
 } = require("./user-handlers");
 const dbUserHandler = require("../../../framework-and-drivers/database-access/")
 // const {loginUserUseCase} = require("./login-user");
@@ -18,8 +20,21 @@ const logoutUseCaseHandler = logoutUseCase();
 const refreshTokenUseCaseHandler = refreshTokenUseCase({dbUserHandler});
 const updateUserUseCaseHandler = updateUserUseCase({dbUserHandler});
 const deleteUserUseCaseHandler = deleteUserUseCase({dbUserHandler});
+const blockUserUseCaseHandler = blockUserUseCase({dbUserHandler});
+const unBlockUserUseCaseHandler = unBlockUserUseCase({dbUserHandler});
 
 
 
 module.exports = {
-    loginUserUseCaseHandler, logoutUseCaseHandler, refreshTokenUseCaseHandler, updateUserUseCaseHandler, deleteUserUseCaseHandler, findAllUsersUseCaseHandler, findOneUserUseCaseHandler, registerUserUserCaseHandler, loginUserUseCaseHandler}  
+    loginUserUseCaseHandler, 
+    logoutUseCaseHandler, 
+    refreshTokenUseCaseHandler, 
+    updateUserUseCaseHandler, 
+    deleteUserUseCaseHandler, 
+    findAllUsersUseCaseHandler, 
+    findOneUserUseCaseHandler, 
+    registerUserUserCaseHandler, 
+    loginUserUseCaseHandler,
+    blockUserUseCaseHandler,
+    unBlockUserUseCaseHandler
+}  

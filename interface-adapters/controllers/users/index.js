@@ -7,6 +7,8 @@ const {
     findOneUserController,
     refreshTokenUserController,
     updateUserController,
+    blockUserController,
+    unBlockUserController
 } = require("./create-user");
 const {
     registerUserUserCaseHandler, 
@@ -17,15 +19,19 @@ const {
     findOneUserUseCaseHandler,
     refreshTokenUseCaseHandler,
     updateUserUseCaseHandler,
+    blockUserUseCaseHandler,
+    unBlockUserUseCaseHandler
 } = require("../../../application-business-rules/use-cases/user");
 
-const createUserControllerHandler = registerUserController({registerUserUserCaseHandler});
+const registerUserControllerHandler = registerUserController({registerUserUserCaseHandler});
 const loginUserControllerHandler = loginUserController({loginUserUseCaseHandler});
 const deleteUserControllerHandler = deleteUserController({deleteUserUseCaseHandler});
 const findAllUsersControllerHandler = findAllUsersController({findAllUsersUseCaseHandler});
 const findOneUserControllerHandler = findOneUserController({findOneUserUseCaseHandler});
 const updateUserControllerHandler = updateUserController({updateUserUseCaseHandler});
 const logoutUserControllerHandler = logoutUserController({logoutUseCaseHandler});
+const blockUserControllerHandler = blockUserController({blockUserUseCaseHandler});
+const unBlockUserControllerHandler = unBlockUserController({unBlockUserUseCaseHandler});
 
 
 const refreshTokenUserControllerHandler = refreshTokenUserController({refreshTokenUseCaseHandler});
@@ -33,12 +39,14 @@ const refreshTokenUserControllerHandler = refreshTokenUserController({refreshTok
 
 
 module.exports = {
-    createUserControllerHandler,
+    registerUserControllerHandler,
     loginUserControllerHandler,
     deleteUserControllerHandler,
     logoutUserControllerHandler,
     findAllUsersControllerHandler,
     findOneUserControllerHandler,
     refreshTokenUserControllerHandler,
-    updateUserControllerHandler
+    updateUserControllerHandler,
+    blockUserControllerHandler,
+    unBlockUserControllerHandler
 }

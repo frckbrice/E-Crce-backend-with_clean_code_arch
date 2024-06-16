@@ -1,7 +1,7 @@
 
 const { InvalidPropertyError } = require("../../interface-adapters/config/validators-errors/errors");
 const bcrypt = require("bcrypt");
-const { makeHttpError } = require("../../interface-adapters/config/validators-errors/http-error");
+const { ObjectId } = require("mongodb");
 
 
 
@@ -63,12 +63,12 @@ function validatePhone(phone) {
  * @param {...Object} otherInfo - Additional user information.
  * @return {Object} The normalized user data.
  */
-function normalise({ firstName, lastName, email, ...otherInfo }) {
+async function normalise({ firstName, lastName, email, ...otherInfo }) {
     return {
         ...otherInfo,
         firstName: firstName.charAt(0).toUpperCase()+ firstName.slice(1),
         lastName: lastName.charAt(0).toUpperCase()+ lastName.slice(1),
-        email: email.toLowerCase()
+        email: email ? email.toLowerCase(): ""
     }
 }
 
@@ -100,6 +100,28 @@ function validateRole(roles) {
     return roles;
 }
 
+const validActive = new Set(["true", "false"]);
+function validateActive(active) {
+    if (!validActive.has(active)) {
+        throw new InvalidPropertyError(
+            `A user's active must be either 'true' or 'false'.`
+        )
+    }
+    if (!Array.isArray(active)) {
+        active = [active];
+    }
+    return active;
+}
+
+//validate mongodb id
+function validateId(id) {
+    if (!ObjectId.isValid(id)) {
+        throw new InvalidPropertyError(
+            `Invalid ID`
+        )
+    }
+    return id;
+}
 /**
  * Validates user data by calling individual validation functions for each field.
  *
@@ -117,7 +139,7 @@ function validateRole(roles) {
  * - mobile: The result of validating the mobile number.
  * - password: The result of validating the password.
  */
-async function validateUserData({firstName, lastName, email, mobile, password, roles}) {
+async function validateUserData({firstName, lastName, email, mobile, password, roles, active, address, whishlist}) {
     const errors = [];
 
     if (!firstName && !lastName) errors.push('user must have a first name or last name.');
@@ -136,11 +158,40 @@ async function validateUserData({firstName, lastName, email, mobile, password, r
         password: await validatePassword(password),
         firstName: firstName ? validateName(firstName) : "",
         lastName: lastName ? validateName(lastName) : "",
-        roles: validateRole(roles),
-        active: active,
+        roles: roles ? validateRole(roles) : ["user"],
+        active: active ?? false,
+        address: Array.isArray(address) ? address : address ? [address] : [],
+        whishlist: roles === "admin" ? [] : Array.isArray(whishlist) ? whishlist : whishlist ? [whishlist] : [],
+        cart: [],
+        isBlocked: false
     };
+}
+
+async function validateUserDataUpdates({firstName, lastName,  mobile, roles, active, email}) {
+
+    const updatedValues = {};
+    if (firstName) {
+        updatedValues.firstName = validateName(firstName);
+    }
+    if (lastName) {
+        updatedValues.lastName = validateName(lastName);
+    }
+    if (mobile) {
+        updatedValues.mobile = validatePhone(mobile);
+    }
+    if (roles) {
+        updatedValues.roles = validateRole(roles);
+    }
+    if(active){
+        updatedValues.active = active;
+    }
+    if(email){
+        updatedValues.email = validateEmail(email);
+    }
+
+    return updatedValues;
 }
 
 
 
-module.exports = {validateUserData, normalise};
+module.exports = {validateUserData, normalise, validateUserDataUpdates, validateId};

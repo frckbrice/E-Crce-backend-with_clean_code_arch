@@ -2,19 +2,29 @@ const express = require('express');
 require('dotenv').config();
 const cors = require('cors');
 const path = require('path');
+
 const { dbconnection } = require('./framework-and-drivers/database-access/db-connection.js');
 const errorHandler = require('./interface-adapters/middlewares/loggers/errorHandler.js');
 const router = require('./routes/auth-user.router.js');
-const { NotFound, ErrorHandlerMiddleware } = require('./interface-adapters/config/validators-errors/errors.js');
-
+const { logger } = require('./interface-adapters/middlewares/loggers/logger.js');
 
 const app = express();
+
 const PORT = process.env.PORT || 5000;
+var cookieParser = require('cookie-parser');
+const corsOptions = require('./interface-adapters/config/corsOptions.Js');
 
-app.use(cors());
+
+// databae connetion call function
+dbconnection().then((db) => {
+    console.log("database connected: ", db.databaseName);
+});
+
+app.use(logger);
+app.use(cors(corsOptions));
 app.use(express.json());
+app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
-
 
 app.use('/users', router);
 
@@ -49,11 +59,6 @@ app.use((req, res, next) => {
 
 
 app.use(errorHandler);
-app.use(NotFound);
-app.use(ErrorHandlerMiddleware);
 
-// databae connetion call function
-dbconnection().then((db) => {
-    console.log("database connected: ", db.databaseName);
-});
+
 app.listen(PORT, () => console.log(`Server started on port http://localhost:${PORT}`));

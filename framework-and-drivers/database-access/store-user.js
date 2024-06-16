@@ -1,4 +1,5 @@
 const { ObjectId } = require("mongodb");
+const { UniqueConstraintError } = require("../../interface-adapters/config/validators-errors/errors");
 
 /**
  * Asynchronously finds a user by email in the given database connection.
@@ -17,14 +18,23 @@ async function findUserByEmail(email, dbconnection) {
 
     const db = await dbconnection()
     try {
-        const result = await db.collection('users').find({ email }).project({ _id: 1, email: 1, firstName: 1, lastName: 1, mobile: 1 }).toArray()
-        return result.map(({ _id: id, ...found }) => ({
-            id: id.toString(),
-            ...found
-        }));
+        const user = await db.collection('users').findOne({ email}, { projection: { _id: 1, email: 1, firstName: 1, lastName: 1, mobile: 1, roles: 1, active: 1 , isBlocked: 1} });
+        if (!user) {
+            return null;
+        }
+        return {
+            id: user._id.toString(),
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            mobile: user.mobile,
+            active: user.active,
+            roles: user.roles,
+            isBlocked: user.isBlocked
+        };
+    
     } catch (error) {
         console.log("error checking for thexistence of user in DB", error);
-        return null;
     }
 }
 
@@ -46,7 +56,7 @@ async function findUserById(id, dbconnection) {
     const newID = new ObjectId(id);
     const db = await dbconnection();
     try {
-        const user = await db.collection('users').findOne({ _id: newID }, { projection: { _id: 1, email: 1, firstName: 1, lastName: 1, mobile: 1, roles: 1, active: 1 } });
+        const user = await db.collection('users').findOne({ _id: newID }, { projection: { _id: 1, email: 1, firstName: 1, lastName: 1, mobile: 1, roles: 1, active: 1,isBlocked: 1 } });
         if (!user) {
             return null;
         }
@@ -57,7 +67,8 @@ async function findUserById(id, dbconnection) {
             lastName: user.lastName,
             mobile: user.mobile,
             active: user.active,
-            roles: user.roles
+            roles: user.roles,
+            isBlocked: user.isBlocked
         };
     } catch (error) {
         console.log("error checking for thexistence of user in DB", error);
@@ -76,20 +87,29 @@ async function findUserById(id, dbconnection) {
  *   - null if the user is not found.
  */
 async function findUserByEmailForLogin(email, dbconnection) {
+
     const db = await dbconnection()
     try {
-        const user = await db.collection('users').findOne({ email }, { projection: { _id: 1, email: 1, roles:1 } });
+        const user = await db.collection('users').findOne({ email }, { projection: { _id: 1, email: 1, roles:1, password: 1 } });
+        console.log(" checking for the xistence of user in DB", user);
         if (!user) {
             return null;
         }
+        console.log(" checking for the xistence of user in DB", {
+            id: user._id.toString(),
+            email: user.email,
+            roles:user.roles,
+            password: user.password
+        });
         return {
             id: user._id.toString(),
             email: user.email,
             roles:user.roles,
+            password: user.password
         };
     } catch (error) {
         console.log("error checking for thexistence of user in DB", error);
-        return null;
+        throw new Error("Error finding user by email for login: " , error.stack);
     }
 }
 
@@ -102,24 +122,19 @@ async function findUserByEmailForLogin(email, dbconnection) {
  * @throws {UniqueConstraintError} If the email already exists in the database.
  */
 async function registerUser(userData, dbconnection) {
-
+    
     const db = await dbconnection()
     try {
-        //check if the user already exist
-        const existingUser = await findUserByEmail(userData.email, dbconnection);
-        if (existingUser) {
-            console.log("user already exists: ", existingUser);
-            throw new UniqueConstraintError(`The email ${userData.email} already exists`);
-        }
-        //insert document and return the inserted document
-        const result = await db.collection('users').insertOne(userData);
-        return result.ops[0];
+        const result = await db.collection('users').insertOne({...userData});
+        // console.log("result: ", result);
+        return result
 
     } catch (error) {
-        console.log("error registering the user to DB: ", error);
         if (error instanceof UniqueConstraintError) {
             throw error;
         }
+        
+        console.error("error registering the user to DB: ", error);
         return null;
     }
 
@@ -132,6 +147,7 @@ async function registerUser(userData, dbconnection) {
  * @return {Promise<Array<Object>>} A promise that resolves to an array of user objects, each containing the user's id, email, first name, last name, and mobile number.
  */
 async function findAllUsers(dbconnection) {
+
     const db = await dbconnection()
     const result = await db.collection('users').find({}, { projection: { _id: 1, email: 1, firstName: 1, lastName: 1, mobile: 1, roles: 1, active: 1 } }).toArray()
     return  result.map(({_id: id, email, firstName, lastName, mobile, roles, active }) => ({
@@ -158,11 +174,19 @@ async function updateUser({ id,  dbconnection, ...userData }) {
 
     const newID = new ObjectId(id);
     const db = await dbconnection()
-    const result = await db
+    const user = await db
         .collection('users')
-        .findOneAndUpdate({ _id: newID }, { $set: {...userData} });
+        .findOneAndUpdate({ _id: newID }, { $set: {...userData} },{ projection: { _id: 1, email: 1, firstName: 1, lastName: 1, mobile: 1, roles: 1, active: 1 } });
 
-    return result
+    return  {
+        id: user._id.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        mobile: user.mobile,
+        active: user.active,
+        roles: user.roles
+    };
 }
 
 /**
@@ -170,12 +194,14 @@ async function updateUser({ id,  dbconnection, ...userData }) {
  *
  * @param {Object} params - The parameters for deleting the user.
  * @param {string} params._id - The ID of the user to delete.
- * @return {Promise<number>} A promise that resolves to the number of documents deleted.
+ * @return {Promise<void>} A promise that resolves when the user is deleted.
  */
-async function deleteUser({ id: _id }, dbconnection) {
+async function deleteUser({ id, dbconnection }) {
     const newId = new ObjectId(id);
-    const db = await dbconnection()
-    return db.collection('users').deleteOne({ _id: newId }).then(result => result.deletedCount);
+    const db = await dbconnection();
+   const deletedUser =  await db.collection('users').deleteOne({ _id: newId });
+
+   return deletedUser.deletedCount
 }
 
 
@@ -195,7 +221,7 @@ module.exports = function makeUserdb({ dbconnection }) {
         registerUser: async (userData) => registerUser(userData, dbconnection),
         findUserByEmailForLogin: async ({ email }) => findUserByEmailForLogin(email, dbconnection),
         updateUser: async ({ id, ...userData }) => updateUser({ id, dbconnection, ...userData }),
-        deleteUser: async ({ id }) => deleteUser({ id: _id }),
+        deleteUser: async ({ id }) => deleteUser({ id, dbconnection }),
     })
 }
 
