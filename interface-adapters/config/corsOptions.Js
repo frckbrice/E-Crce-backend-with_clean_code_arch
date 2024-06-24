@@ -4,7 +4,7 @@ const corsOptions = {
   origin: (origin, callback) => {
     // no origin because of postman/thunder testers
     if (allowedOrigin.includes(origin) || !origin) {
-      console.log({ "original_request": origin });
+      console.log("CORS origin: ", origin);
       callback(null, true);
     } else {
       console.log("origin: ", origin);

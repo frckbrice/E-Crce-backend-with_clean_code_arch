@@ -1,65 +1,21 @@
 
-const { UniqueConstraintError, InvalidPropertyError, RequiredParameterError } = require("../../config/validators-errors/errors");
-const { makeHttpError } = require("../../config/validators-errors/http-error");
+
+const { makeHttpError } = require("../../validators-errors/http-error");
 const { logEvents } = require("../../middlewares/loggers/logger");
 
 
 module.exports = {
-
     /**
-     * Handles the registration of a user by calling the registerUserUseCaseHandler with the provided user information.
+     * Registers a new user using the provided user case handler.
      *
-     * @param {Object} httpRequest - An object containing the HTTP request with user information.
-     * @return {Promise<Object>} A promise that resolves to an object containing the HTTP response with user registration details.
+     * @param {Object} options - The options object.
+     * @param {Function} options.registerUserUserCaseHandler - The user case handler for registering a new user.
+     * @param {Object} httpRequest - The HTTP request object.
+     * @param {Object} httpRequest.body - The request body containing the user information.
+     * @return {Promise<Object>} - A promise that resolves to an object with the registered user data and headers.
+     * @throws {Error} - If the request body is empty or not an object, throws an HTTP error with status code 400.
+     * @throws {Error} - If there is an error during user registration, throws an HTTP error with the appropriate status code.
      */
-    // registerUserController: ({ registerUserUserCaseHandler }) => {
-    //     return async function registerUserControllerHandler(httpRequest) {
-    //         const { body } = httpRequest;
-    //         if (body === {}) {
-    //             throw makeHttpError({
-    //                 statusCode: 400,
-    //                 errorMessage: 'Bad request. No POST body.'
-    //             });
-    //         }
-
-    //         let userInfo = typeof body === 'string' ? JSON.parse(body) : body;
-
-    //         try {
-    //             const registeredUser = await registerUserUserCaseHandler(userInfo);
-    //             return {
-    //                 headers: {
-    //                     'Content-Type': 'application/json'
-    //                 },
-    //                 statusCode: registeredUser.statusCode || 201,
-    //                 data: JSON.stringify(registeredUser.data || registeredUser)
-    //             };
-    //         } catch (e) {
-    //             console.error("error from register controller: ", e)
-    //             logEvents(
-    //                 `${e.no}:${e.code}\t${e.name}\t${e.message}`,
-    //                 "controllerHandlerErr.log"
-    //             );
-    //             // const statusCode =
-    //             //     e instanceof UniqueConstraintError
-    //             //         ? 409
-    //             //         : e instanceof InvalidPropertyError ||
-    //             //         e instanceof RequiredParameterError
-    //             //             ? 400
-    //             //             : 500;
-    //             throw makeHttpError({
-    //                 errorMessage: e.message,
-    //                 statusCode: e.statusCode,
-    //             });
-    //         }
-    //     };
-    // },
-
-    // ... other imports
-
-
-
-    // ... other functions
-
     registerUserController: ({ registerUserUserCaseHandler }) => {
         return async function registerUserControllerHandler(httpRequest) {
             const { body } = httpRequest;
@@ -114,7 +70,8 @@ module.exports = {
      * @throws {RequiredParameterError} If the email or password is missing.
      * @throws {makeHttpError} If there is an error during the login process.
      */
-    loginUserController: ({ loginUserUseCaseHandler }) => {
+    loginUserController: ({ loginUserUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError }) => {
         return async function loginUserControllerHandler(httpRequest) {
 
             const { email, password } = httpRequest.body;
@@ -164,50 +121,51 @@ module.exports = {
     * @param {Object} httpRequest - The HTTP request object containing the cookies.
     * @return {Promise<Object>} An object containing the headers, status code, and data of the refreshed access token in JSON format.
     */
-    refreshTokenUserController: ({ refreshTokenUseCaseHandler }) => async function refreshTokenUserControllerHandler(httpRequest) {
+    refreshTokenUserController: ({ refreshTokenUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError }) => async function refreshTokenUserControllerHandler(httpRequest) {
 
-        //Iam facing problem with cooki-parser
-        const { body: { refreshToken } } = httpRequest;
-        if (!refreshToken) {
-            return makeHttpError({
-                statusCode: 400,
-                errorMessage: 'Bad request. No refreshToken.'
-            });
-        }
-        try {
+            //Iam facing problem with cooki-parser
+            const { body: { refreshToken } } = httpRequest;
+            if (!refreshToken) {
+                return makeHttpError({
+                    statusCode: 400,
+                    errorMessage: 'Bad request. No refreshToken.'
+                });
+            }
+            try {
 
-            const newAccessToken = await refreshTokenUseCaseHandler({ refreshToken });
-            console.log("from refresh token controller handler: ", newAccessToken);
+                const newAccessToken = await refreshTokenUseCaseHandler({ refreshToken });
+                console.log("from refresh token controller handler: ", newAccessToken);
 
-            const maxAge = {
-                accessToken: process.env.JWT_REFRESH_EXPIRES_IN
-            };
+                const maxAge = {
+                    accessToken: process.env.JWT_REFRESH_EXPIRES_IN
+                };
 
-            // const newCookies = Object.entries(maxAge).reduce((acc, [name, age]) => {
-            //     acc[name] = `${name}=${refreshToken[name]}; HttpOnly; Path=/; Max-Age=${age}; SameSite=none; Secure`;
-            //     return acc;
-            // }, {});
-            const newCookies = Object.entries(maxAge).map(([name, age]) => `${name}=${newAccessToken}; HttpOnly; Path=/; Max-Age=${age}; SameSite=none; Secure`).join('; ');
+                // const newCookies = Object.entries(maxAge).reduce((acc, [name, age]) => {
+                //     acc[name] = `${name}=${refreshToken[name]}; HttpOnly; Path=/; Max-Age=${age}; SameSite=none; Secure`;
+                //     return acc;
+                // }, {});
+                const newCookies = Object.entries(maxAge).map(([name, age]) => `${name}=${newAccessToken}; HttpOnly; Path=/; Max-Age=${age}; SameSite=none; Secure`).join('; ');
 
-            // we may just return this token in the body and use it on the frontend other way.
-            return {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Set-Cookie': newCookies
-                },
-                statusCode: 201,
-                data: JSON.stringify(newAccessToken)
-            };
-        } catch (e) {
-            logEvents(
-                `${e.no}:${e.code}\t${e.name}\t${e.TypeError}`,
-                "controllerHandlerErr.log"
-            );
-            console.log("error from refresh token controller handler: ", e);
-            const statusCode = e instanceof UniqueConstraintError || e instanceof InvalidPropertyError ? 400 : 500;
-            return makeHttpError({ errorMessage: e.message, statusCode });
-        }
-    },
+                // we may just return this token in the body and use it on the frontend other way.
+                return {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Set-Cookie': newCookies
+                    },
+                    statusCode: 201,
+                    data: JSON.stringify(newAccessToken)
+                };
+            } catch (e) {
+                logEvents(
+                    `${e.no}:${e.code}\t${e.name}\t${e.TypeError}`,
+                    "controllerHandlerErr.log"
+                );
+                console.log("error from refresh token controller handler: ", e);
+                const statusCode = e instanceof UniqueConstraintError || e instanceof InvalidPropertyError ? 400 : 500;
+                return makeHttpError({ errorMessage: e.message, statusCode });
+            }
+        },
 
     /**
      * Handles the logout user controller by calling the logoutUseCaseHandler with the provided refreshToken.
@@ -221,7 +179,8 @@ module.exports = {
      * @throws {RequiredParameterError} If the refreshToken is missing.
      * @throws {makeHttpError} If there is an error during the logout process.
      */
-    logoutUserController: ({ logoutUseCaseHandler }) => {
+    logoutUserController: ({ logoutUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError }) => {
         return async function logoutUserControllerHandler(httpRequest) {
 
             const { refreshToken } = httpRequest.body;
@@ -231,7 +190,7 @@ module.exports = {
                     errorMessage: 'Bad request. No refreshToken.'
                 });
             }
-           
+
             try {
 
                 const cookies = 'accessToken=; HttpOnly; Path=/; Max-Age=0; SameSite=none; Secure,' +
@@ -270,7 +229,8 @@ module.exports = {
         }
     },
 
-    deleteUserController: ({ deleteUserUseCaseHandler }) => {
+    deleteUserController: ({ deleteUserUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError }) => {
         return async function deleteUserControllerHandler(httpRequest) {
             const { userId } = httpRequest.params;
             if (!userId) {
@@ -300,7 +260,8 @@ module.exports = {
         }
     },
 
-    updateUserController: ({ updateUserUseCaseHandler }) => {
+    updateUserController: ({ updateUserUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError }) => {
         return async function updateUserControllerHandler(httpRequest) {
 
             const { userId } = httpRequest.params;
@@ -332,10 +293,11 @@ module.exports = {
         }
     },
 
-    findOneUserController: ({ findOneUserUseCaseHandler }) => {
+    findOneUserController: ({ findOneUserUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError }) => {
         return async function findOneUserControllerHandler(httpRequest) {
             const { userId } = httpRequest.params;
-            if (!userId ) {
+            if (!userId) {
                 return makeHttpError({
                     statusCode: 400,
                     errorMessage: 'No user Id provided'
@@ -367,7 +329,8 @@ module.exports = {
      *
      * @return {Object} Contains headers, statusCode, and data of users in JSON format.
      */
-    findAllUsersController: ({ findAllUsersUseCaseHandler }) => {
+    findAllUsersController: ({ findAllUsersUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError }) => {
         return async function findAllUsersControllerHandler() {
             try {
                 const users = await findAllUsersUseCaseHandler();
@@ -393,65 +356,67 @@ module.exports = {
 
 
     //block user
-    blockUserController: ({ blockUserUseCaseHandler }) => async function blockUserControllerHandler(httpRequest) {
-        const { userId } = httpRequest.params;
-        if (!userId ) {
-            return makeHttpError({
-                statusCode: 400,
-                errorMessage: 'No user Id provided'
-            });
-        }
-        try {
-            const blockedUser = await blockUserUseCaseHandler({ userId });
-            console.log(" from blockUserController controller handler: ", e);
-            return {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                statusCode: 201,
-                data: JSON.stringify({ message: "user blocked successfully" })
-            };
-        } catch (e) {
-            logEvents(
-                `${e.no}:${e.code}\t${e.name}\t${e.message}`,
-                "controllerHandlerErr.log"
-            );
-            console.log("error from blockUserController controller handler: ", e);
-            const statusCode = e instanceof UniqueConstraintError || e instanceof InvalidPropertyError ? 400 : 500;
-            return makeHttpError({ errorMessage: e.message, statusCode });
-        }
+    blockUserController: ({ blockUserUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError }) => async function blockUserControllerHandler(httpRequest) {
+            const { userId } = httpRequest.params;
+            if (!userId) {
+                return makeHttpError({
+                    statusCode: 400,
+                    errorMessage: 'No user Id provided'
+                });
+            }
+            try {
+                const blockedUser = await blockUserUseCaseHandler({ userId });
+                console.log(" from blockUserController controller handler: ", e);
+                return {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    statusCode: 201,
+                    data: JSON.stringify({ message: "user blocked successfully" })
+                };
+            } catch (e) {
+                logEvents(
+                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    "controllerHandlerErr.log"
+                );
+                console.log("error from blockUserController controller handler: ", e);
+                const statusCode = e instanceof UniqueConstraintError || e instanceof InvalidPropertyError ? 400 : 500;
+                return makeHttpError({ errorMessage: e.message, statusCode });
+            }
 
-    },
+        },
 
 
     //unblock user
-    unBlockUserController: ({ unBlockUserUseCaseHandler }) => async function unBlockUserControllerHandler(httpRequest) {
-        const { userId } = httpRequest.params;
-        if (!userId ) {
-            return makeHttpError({
-                statusCode: 400,
-                errorMessage: 'No user Id provided'
-            });
+    unBlockUserController: ({ unBlockUserUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError }) => async function unBlockUserControllerHandler(httpRequest) {
+            const { userId } = httpRequest.params;
+            if (!userId) {
+                return makeHttpError({
+                    statusCode: 400,
+                    errorMessage: 'No user Id provided'
+                });
+            }
+            try {
+                const unBlockedUser = await unBlockUserUseCaseHandler({ userId });
+                console.log(" from unBlockUserController controller handler: ", unBlockedUser);
+                return {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    statusCode: 201,
+                    data: JSON.stringify({ message: "user unblocked successfully" })
+                };
+            } catch (e) {
+                logEvents(
+                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    "controllerHandlerErr.log"
+                );
+                console.log("error from unBlockUserController controller handler: ", e);
+                const statusCode = e instanceof UniqueConstraintError || e instanceof InvalidPropertyError ? 400 : 500;
+                return makeHttpError({ errorMessage: e.message, statusCode });
+            }
         }
-        try {
-            const unBlockedUser = await unBlockUserUseCaseHandler({ userId });
-            console.log(" from unBlockUserController controller handler: ", unBlockedUser);
-            return {
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                statusCode: 201,
-                data: JSON.stringify({ message: "user unblocked successfully" })
-            };
-        } catch (e) {
-            logEvents(
-                `${e.no}:${e.code}\t${e.name}\t${e.message}`,
-                "controllerHandlerErr.log"
-            );
-            console.log("error from unBlockUserController controller handler: ", e);
-            const statusCode = e instanceof UniqueConstraintError || e instanceof InvalidPropertyError ? 400 : 500;
-            return makeHttpError({ errorMessage: e.message, statusCode });
-        }
-    }
     ,
 }

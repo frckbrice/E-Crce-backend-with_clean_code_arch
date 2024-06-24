@@ -15,3 +15,6 @@
 2024-06-16	15:08:05	8e8dde2d-bf64-408a-8ce7-2208ec56b51c	TypeError: Cannot read properties of undefined (reading 'length')	GET	/users/refresh	undefined
 2024-06-16	15:16:14	20dcb947-da85-4da9-843f-ca52d4d44bd3	TypeError: Cannot convert object to primitive value	GET	/users/refresh	undefined
 2024-06-16	15:18:32	dd94a3b6-5fef-460b-837a-f4cece8f479a	TypeError: Cannot convert object to primitive value	GET	/users/refresh	undefined
+2024-06-22	12:51:11	9abb8286-ea80-4c6d-b8f2-3cc53b2d8ecf	SyntaxError: Expected ':' after property name in JSON at position 134	POST	/products	undefined
+2024-06-22	12:51:41	3e9917ed-5db2-4403-a6e3-632429136f95	SyntaxError: Expected ':' after property name in JSON at position 134	POST	/products	undefined
+2024-06-22	14:14:58	1024e103-1575-4123-887a-6f56f7a6fc4f	SyntaxError: Expected double-quoted property name in JSON at position 840	POST	/products	undefined

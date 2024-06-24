@@ -3,10 +3,11 @@ require('dotenv').config();
 const cors = require('cors');
 const path = require('path');
 
-const { dbconnection } = require('./framework-and-drivers/database-access/db-connection.js');
+const { dbconnection } = require('./interface-adapters/database-access/db-connection.js');
 const errorHandler = require('./interface-adapters/middlewares/loggers/errorHandler.js');
-const router = require('./routes/auth-user.router.js');
+const userAndAuthRouter = require('./routes/auth-user.router.js');
 const { logger } = require('./interface-adapters/middlewares/loggers/logger.js');
+const productRouter = require('./routes/product.routes.js');
 
 const app = express();
 
@@ -26,7 +27,8 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: false }));
 
-app.use('/users', router);
+app.use('/users', userAndAuthRouter);
+app.use('/products', productRouter);
 
 app.use("/", (_, res) => {
     res.sendFile(path.join(__dirname, "public", "views", "index.html"));

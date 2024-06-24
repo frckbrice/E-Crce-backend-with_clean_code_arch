@@ -1,5 +1,5 @@
 const {
-    registerUserController, 
+    registerUserController,
     loginUserController,
     logoutUserController,
     deleteUserController,
@@ -9,10 +9,10 @@ const {
     updateUserController,
     blockUserController,
     unBlockUserController
-} = require("./create-user");
+} = require("./user-auth-controller");
 const {
-    registerUserUserCaseHandler, 
-    loginUserUseCaseHandler, 
+    registerUserUserCaseHandler,
+    loginUserUseCaseHandler,
     logoutUseCaseHandler,
     deleteUserUseCaseHandler,
     findAllUsersUseCaseHandler,
@@ -23,18 +23,50 @@ const {
     unBlockUserUseCaseHandler
 } = require("../../../application-business-rules/use-cases/user");
 
-const registerUserControllerHandler = registerUserController({registerUserUserCaseHandler});
-const loginUserControllerHandler = loginUserController({loginUserUseCaseHandler});
-const deleteUserControllerHandler = deleteUserController({deleteUserUseCaseHandler});
-const findAllUsersControllerHandler = findAllUsersController({findAllUsersUseCaseHandler});
-const findOneUserControllerHandler = findOneUserController({findOneUserUseCaseHandler});
-const updateUserControllerHandler = updateUserController({updateUserUseCaseHandler});
-const logoutUserControllerHandler = logoutUserController({logoutUseCaseHandler});
-const blockUserControllerHandler = blockUserController({blockUserUseCaseHandler});
-const unBlockUserControllerHandler = unBlockUserController({unBlockUserUseCaseHandler});
+const {
+    UniqueConstraintError,
+    InvalidPropertyError
+} = require("../../validators-errors/errors");
+
+const registerUserControllerHandler = registerUserController({
+    registerUserUserCaseHandler, UniqueConstraintError,
+    InvalidPropertyError
+});
+const loginUserControllerHandler = loginUserController({
+    loginUserUseCaseHandler, UniqueConstraintError,
+    InvalidPropertyError
+});
+const deleteUserControllerHandler = deleteUserController({
+    deleteUserUseCaseHandler, UniqueConstraintError,
+    InvalidPropertyError
+});
+const findAllUsersControllerHandler = findAllUsersController({
+    findAllUsersUseCaseHandler, UniqueConstraintError,
+    InvalidPropertyError
+});
+const findOneUserControllerHandler = findOneUserController({
+    findOneUserUseCaseHandler, UniqueConstraintError,
+    InvalidPropertyError
+});
+const updateUserControllerHandler = updateUserController({
+    updateUserUseCaseHandler, UniqueConstraintError,
+    InvalidPropertyError
+});
+const logoutUserControllerHandler = logoutUserController({
+    logoutUseCaseHandler, UniqueConstraintError,
+    InvalidPropertyError
+});
+const blockUserControllerHandler = blockUserController({
+    blockUserUseCaseHandler, UniqueConstraintError,
+    InvalidPropertyError
+});
+const unBlockUserControllerHandler = unBlockUserController({
+    unBlockUserUseCaseHandler, UniqueConstraintError,
+    InvalidPropertyError
+});
 
 
-const refreshTokenUserControllerHandler = refreshTokenUserController({refreshTokenUseCaseHandler});
+const refreshTokenUserControllerHandler = refreshTokenUserController({ refreshTokenUseCaseHandler });
 
 
 

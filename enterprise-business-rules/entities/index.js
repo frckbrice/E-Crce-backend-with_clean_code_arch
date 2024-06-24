@@ -1,16 +1,24 @@
-const {makeUserModel} = require("./user-model");
+const { makeUserModel } = require("./user-model");
 const {
-    normalise, 
-    validateUserData, 
+    normalise,
+    validateUserData,
     validateUserDataUpdates,
     validateId
-} = require("../validate-models/validation-functions");
+} = require("../validate-models/user-validation-functions");
 
-const makeUser = makeUserModel({normalise, validateUserData, validateUserDataUpdates});
+const {
+    makeProductModel
+} = require("./product-model");
+
+const { basicProductValidation } = require("../validate-models/product-validation-fcts")();
+
+const makeUser = makeUserModel({ normalise, validateUserData, validateUserDataUpdates });
+const makeProductModelHandler = makeProductModel({ basicProductValidation });
 
 
 module.exports = {
-    makeUser, 
-    validateId, 
-    validateUserDataUpdates
-} ;
+    makeUser,
+    validateId,
+    validateUserDataUpdates,
+    makeProductModelHandler
+};

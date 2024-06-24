@@ -1,5 +1,5 @@
 
-const { InvalidPropertyError } = require("../../interface-adapters/config/validators-errors/errors");
+const { InvalidPropertyError, RequiredParameterError } = require("../../interface-adapters/validators-errors/errors");
 const bcrypt = require("bcrypt");
 const { ObjectId } = require("mongodb");
 
@@ -13,9 +13,9 @@ const { ObjectId } = require("mongodb");
 */
 function validateEmail(email) {
     const re = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/i;
-    if (!re.test(String(email).toLowerCase())){
+    if (!re.test(String(email).toLowerCase())) {
         throw new InvalidPropertyError(" Invalid Email ")
-    } ;
+    };
 
     return email;
 }
@@ -50,7 +50,7 @@ function validatePhone(phone) {
     if (!phoneRegex.test(phone) || phone.length < 11) {
         throw new InvalidPropertyError(`A user's phone number is not valid.`);
     }
-    
+
     return phone;
 }
 
@@ -66,9 +66,9 @@ function validatePhone(phone) {
 async function normalise({ firstName, lastName, email, ...otherInfo }) {
     return {
         ...otherInfo,
-        firstName: firstName.charAt(0).toUpperCase()+ firstName.slice(1),
-        lastName: lastName.charAt(0).toUpperCase()+ lastName.slice(1),
-        email: email ? email.toLowerCase(): ""
+        firstName: firstName.charAt(0).toUpperCase() + firstName.slice(1),
+        lastName: lastName.charAt(0).toUpperCase() + lastName.slice(1),
+        email: email ? email.toLowerCase() : ""
     }
 }
 
@@ -86,8 +86,8 @@ async function validatePassword(password) {
 // Validate role of the user, either user or admin
 const validRoles = new Set(["user", "admin"]);
 function validateRole(roles) {
-     // make role always an array
-  
+    // make role always an array
+
     if (!validRoles.has(roles)) {
         throw new InvalidPropertyError(
             `A user's role must be either 'user' or 'admin'.`
@@ -139,17 +139,17 @@ function validateId(id) {
  * - mobile: The result of validating the mobile number.
  * - password: The result of validating the password.
  */
-async function validateUserData({firstName, lastName, email, mobile, password, roles, active, address, whishlist}) {
+async function validateUserData({ firstName, lastName, email, mobile, password, roles, active, address, whishlist }) {
     const errors = [];
 
     if (!firstName && !lastName) errors.push('user must have a first name or last name.');
     if (!email) errors.push('user must have an email.');
     if (!password) errors.push('user must have a password.');
-    if(!roles) errors.push('user must have a role');
-    if(typeof active !== "boolean") errors.push('user must have an active status');
+    if (!roles) errors.push('user must have a role');
+    if (typeof active !== "boolean") errors.push('user must have an active status');
 
     if (errors.length) {
-        throw new InvalidPropertyError(errors.join(', '));
+        throw new RequiredParameterError(errors.join(', '));
     }
 
     return {
@@ -163,13 +163,16 @@ async function validateUserData({firstName, lastName, email, mobile, password, r
         address: Array.isArray(address) ? address : address ? [address] : [],
         whishlist: roles === "admin" ? [] : Array.isArray(whishlist) ? whishlist : whishlist ? [whishlist] : [],
         cart: [],
-        isBlocked: false
+        isBlocked: false,
+        createdAt: { $currentDate: true }
     };
 }
 
-async function validateUserDataUpdates({firstName, lastName,  mobile, roles, active, email}) {
+async function validateUserDataUpdates({ firstName, lastName, mobile, roles, active, email }) {
 
-    const updatedValues = {};
+    const updatedValues = {
+        lastModified: { $currentDate: true }
+    };
     if (firstName) {
         updatedValues.firstName = validateName(firstName);
     }
@@ -182,10 +185,10 @@ async function validateUserDataUpdates({firstName, lastName,  mobile, roles, act
     if (roles) {
         updatedValues.roles = validateRole(roles);
     }
-    if(active){
+    if (active) {
         updatedValues.active = active;
     }
-    if(email){
+    if (email) {
         updatedValues.email = validateEmail(email);
     }
 
@@ -194,4 +197,4 @@ async function validateUserDataUpdates({firstName, lastName,  mobile, roles, act
 
 
 
-module.exports = {validateUserData, normalise, validateUserDataUpdates, validateId};
+module.exports = { validateUserData, normalise, validateUserDataUpdates, validateId };
