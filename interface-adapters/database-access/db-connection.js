@@ -1,8 +1,8 @@
 const MongoClient = require("mongodb").MongoClient;
-const { logEvents } = require("../../middlewares/loggers/logger")
+const { logEvents } = require("../../interface-adapters/middlewares/loggers/logger")
 module.exports = {
 
-    connection: async () => {
+    dbconnection: async () => {
         // The MongoClient is the object that references the connection to our
         // datastore (Atlas, for example)
         const client = new MongoClient(process.env.DB_URI);

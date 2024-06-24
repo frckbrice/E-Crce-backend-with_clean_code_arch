@@ -10,10 +10,16 @@ html {
 }
 
 body {
-  min-height: 100vh;
+  
   background-color: #21202e;
   color: rgb(203, 197, 197);
+  
+}
+
+center {
+  min-height: 100vh;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
 }

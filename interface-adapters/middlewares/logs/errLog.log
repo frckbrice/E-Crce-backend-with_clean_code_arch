@@ -1,0 +1,20 @@
+2024-06-13	20:24:07	336550bd-457e-41ba-a060-affdb80de11f	Error: ENOENT: no such file or directory, stat '/home/frckbrice/Documents/rebaseacademy2024/Nextjs/Business Project of Hollyday/digital-market-project-2/views/404.html'	POST	/*	undefined
+2024-06-13	21:12:25	b69fc749-982f-47d0-a029-80e347609471	TypeError: responseCallback(...).then is not a function	POST	/users/register	undefined
+2024-06-13	21:13:50	89cb43aa-219d-4df4-988b-cbb8c253e026	TypeError: responseCallback(...).then is not a function	POST	/users/register	undefined
+2024-06-13	21:14:09	056438b1-49e9-4914-a7c7-1020485f5441	TypeError: responseCallback(...).then is not a function	POST	/users/register	undefined
+2024-06-15	13:33:16	c9b3ff91-c77d-4b34-ad51-2fbee781134e	TypeError: logEvents is not a function	POST	/users/login	undefined
+2024-06-15	13:43:35	f92f6169-be02-4513-b773-af5b87f57c0d	Too many requests: undefined	POST	/login	undefined
+2024-06-15	14:04:22	c8637a54-a385-483f-b0e5-e71c33d6d013	TypeError: Cannot read properties of undefined (reading 'roles')	POST	/users/refresh	undefined
+2024-06-15	14:30:08	08ffc766-f795-42ef-a74c-f8cd0ac2995d	SyntaxError: Expected ':' after property name in JSON at position 312	POST	/users/login	undefined
+2024-06-15	14:31:37	33a1a616-6f18-4132-bace-b52c53a86e38	SyntaxError: Expected ':' after property name in JSON at position 312	POST	/users/login	undefined
+2024-06-15	14:31:55	dc340328-fb4a-47f0-90fa-a855c98c6806	SyntaxError: Expected ':' after property name in JSON at position 312	POST	/users/login	undefined
+2024-06-15	14:35:38	db164ef7-4f0d-4ab8-89ee-a7b8ca492a29	TypeError: jwt.verify(...).catch is not a function	POST	/users/refresh	undefined
+2024-06-16	14:46:21	655479e4-4142-4f75-be1a-3da1ad4d25bc	ReferenceError: cookie is not defined	GET	/users/refresh	undefined
+2024-06-16	14:49:22	7bddf386-0856-4253-acc5-da4e86c8fc53	ReferenceError: cookie is not defined	GET	/users/refresh	undefined
+2024-06-16	15:07:47	9b9bb04e-6ec9-40f1-b298-f428442decf3	TypeError: cookie.key is not a function	GET	/users/refresh	undefined
+2024-06-16	15:08:05	8e8dde2d-bf64-408a-8ce7-2208ec56b51c	TypeError: Cannot read properties of undefined (reading 'length')	GET	/users/refresh	undefined
+2024-06-16	15:16:14	20dcb947-da85-4da9-843f-ca52d4d44bd3	TypeError: Cannot convert object to primitive value	GET	/users/refresh	undefined
+2024-06-16	15:18:32	dd94a3b6-5fef-460b-837a-f4cece8f479a	TypeError: Cannot convert object to primitive value	GET	/users/refresh	undefined
+2024-06-22	12:51:11	9abb8286-ea80-4c6d-b8f2-3cc53b2d8ecf	SyntaxError: Expected ':' after property name in JSON at position 134	POST	/products	undefined
+2024-06-22	12:51:41	3e9917ed-5db2-4403-a6e3-632429136f95	SyntaxError: Expected ':' after property name in JSON at position 134	POST	/products	undefined
+2024-06-22	14:14:58	1024e103-1575-4123-887a-6f56f7a6fc4f	SyntaxError: Expected double-quoted property name in JSON at position 840	POST	/products	undefined
