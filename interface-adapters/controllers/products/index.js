@@ -1,11 +1,14 @@
-const { createProductDbHandler } = require("../../database-access")
+const {
+    createProductDbHandler,
+    findOneProductDbHandler
+} = require("../../database-access")
 
 const {
     createProductController,
     // updateProductController,
     // deleteProductController,
     // findAllProductController,
-    // findOneProductController,
+    findOneProductController,
     // findProductRatingController,
     // findBestUserRaterController
 } = require("./product-controller")();
@@ -15,7 +18,7 @@ const {
     // updateProductUseHandler,
     // deleteProductUseHandler,
     // findAllProductUseHandler,
-    // findProductUseHandler,
+    findOneProductUseCaseHandler,
     // findProductRatingUseCaseHandler,
     // findBestUserRaterUseCaseHandler
 } = require("../../../application-business-rules/use-cases/products");
@@ -30,7 +33,7 @@ const createProductControllerHandler = createProductController({ createProductUs
 // const updateProductControllerHandler = updateProductController({ dbProductHandler, updateProductUseHandler, errorHandlers });
 // const deleteProductControllerHandler = deleteProductController({ dbProductHandler, deleteProductUseHandler, errorHandlers });
 // const findAllProductsControllerHandler = findAllProductController({ dbProductHandler, findAllProductUseHandler, errorHandlers });
-// const findOneProductControllerHandler = findOneProductController({ dbProductHandler, findProductUseHandler, errorHandlers });
+const findOneProductControllerHandler = findOneProductController({ findOneProductDbHandler, findOneProductUseCaseHandler, errorHandlers });
 // const findProductRatingControllerHandler = findProductRatingController({ dbProductHandler, findProductRatingUseCaseHandler, errorHandlers });
 // const findBestUserRaterControllerHandler = findBestUserRaterController({ dbProductHandler, findBestUserRaterUseCaseHandler, errorHandlers });
 
@@ -41,7 +44,7 @@ module.exports = {
     // updateProductControllerHandler,
     // deleteProductControllerHandler,
     // findAllProductsControllerHandler,
-    // findOneProductControllerHandler,
+    findOneProductControllerHandler,
     // findProductRatingControllerHandler,
     // findBestUserRaterControllerHandler
 }

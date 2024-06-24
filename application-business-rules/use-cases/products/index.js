@@ -1,5 +1,6 @@
 const {
-    createProductUseCase
+    createProductUseCase,
+    findOneProductUseCase
 } = require("./product-handlers");
 
 const {
@@ -8,7 +9,9 @@ const {
 
 
 const createProductUseCaseHandler = createProductUseCase({ makeProductModelHandler });
+const findOneProductUseCaseHandler = findOneProductUseCase({ makeProductModelHandler });
 
 module.exports = {
     createProductUseCaseHandler,
+    findOneProductUseCaseHandler
 }

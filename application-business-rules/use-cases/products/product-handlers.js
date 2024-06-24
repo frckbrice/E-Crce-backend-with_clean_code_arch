@@ -28,9 +28,28 @@ const createProductUseCase = ({ makeProductModelHandler }) => async function
     }
 }
 
+//find one product from DB
+const findOneProductUseCase = ({ makeProductModelHandler }) => async function
+    findOneProductUseCaseHandler({ findOneProductDbHandler, productData, errorHandlers }) {
+
+    try {
+        const validatedProductData = await makeProductModelHandler({ productData, errorHandlers });
+        // store product in database mongodb
+        const newProduct = await findOneProductDbHandler(validatedProductData);
+        return Object.freeze(newProduct)
+    } catch (error) {
+        console.log("Error from product handler: ", error);
+        logEvents(
+            `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+            "product.log"
+        );
+        throw new Error(error.message);
+    }
+}
 
 
 module.exports = Object.freeze({
     createProductUseCase,
+    findOneProductUseCase
 })
 

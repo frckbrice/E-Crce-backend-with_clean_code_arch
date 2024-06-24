@@ -1,8 +1,18 @@
 const { dbconnection } = require("./db-connection");
+const { logEvents } = require("../middlewares/loggers/logger");
+
+
 const makeUserdb = require("./store-user");
-
-
-const { createProductDbHandler } = require("./store-product")({ dbconnection });
+const {
+    createProductDbHandler,
+    findOneProductDbHandler,
+    findAllProductsDbHandler
+} = require("./store-product")({ dbconnection, logEvents });
 const dbUserHandler = makeUserdb({ dbconnection });
 
-module.exports = { dbUserHandler, createProductDbHandler };
+module.exports = {
+    dbUserHandler,
+    createProductDbHandler,
+    findOneProductDbHandler,
+    findAllProductsDbHandler
+};

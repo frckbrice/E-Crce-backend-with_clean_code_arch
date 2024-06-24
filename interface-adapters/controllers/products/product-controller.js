@@ -72,6 +72,64 @@ const createProductController = ({ createProductUseCaseHandler, createProductDbH
 
 }
 
+// find one product controller 
+const findOneProductController = ({ findOneProductDbHandler, findOneProductUseCaseHandler, errorHandlers }) => async function findOneProductControllerHandler(httpRequest) {
+
+    const { UniqueConstraintError, InvalidPropertyError } = errorHandlers;
+
+    const { productId } = httpRequest.params;
+    if (!productId) {
+        return makeHttpError({
+            statusCode: 400,
+            errorMessage: 'No product Id provided'
+        });
+    }
+    try {
+        const product = await findOneProductUseCaseHandler({ productId, errorHandlers, findOneProductDbHandler });
+        return {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            statusCode: 201,
+            data: JSON.stringify(product)
+        };
+    } catch (e) {
+        logEvents(
+            `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+            "controllerHandlerErr.log"
+        );
+        console.log("error from findOneProductController controller handler: ", e);
+        return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode });
+    }
+}
+
+
+// find all product controller
+const findAllProductController = ({ findAllProductsDbHandler, findAllProductUseCaseHandler, errorHandlers }) => async function findAllProductControllerHandler(httpRequest) {
+
+    const { UniqueConstraintError, InvalidPropertyError } = errorHandlers;
+    try {
+        const products = await findAllProductUseCaseHandler({ findAllProductsDbHandler, errorHandlers });
+        return {
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            statusCode: 201,
+            data: JSON.stringify(products)
+        };
+    } catch (e) {
+        logEvents(
+            `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+            "controllerHandlerErr.log"
+        );
+        console.log("error from findAllProductController controller handler: ", e);
+        return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode });
+    }
+}
+
+
+
 module.exports = () => Object.freeze({
     createProductController,
+    findOneProductController
 })
