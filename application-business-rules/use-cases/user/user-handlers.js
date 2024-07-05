@@ -16,26 +16,31 @@ module.exports = {
    * @return {Promise<Object|Error>} Returns a promise that resolves to the registered user object or rejects with an error.
    * @throws {HttpError} Throws an HttpError if the user already exists or if there is an error during registration.
    */
-  registerUserUseCase: ({ dbUserHandler }) => async function registerUserUseCaseHandler(userData) {
+  registerUserUseCase: ({ dbUserHandler, entityModels }) => async function registerUserUseCaseHandler(userData) {
+
+    const { makeUser } = entityModels;
     try {
       const validatedUser = await makeUser({ userData });
       const { email } = validatedUser;
       const existingUser = await dbUserHandler.findUserByEmail({ email });
 
       if (existingUser) {
-        throw new UniqueConstraintError(`User with email ${email} already exists`);
+        return makeHttpError({
+          errorMessage: "this email already exists",
+          statusCode: 409
+        });
       } else {
         return await dbUserHandler.registerUser(validatedUser);
       }
 
-    } catch (err) {
+    } catch (error) {
       console.log("error from register use case handler: ", err);
       logEvents(
-        `${err.no}:${error.code}\t${error.syscall}\t${error.hostname}`,
-        "useCaseHandlerErr.log"
+        `${error.no}:${error.code}\t${error.syscall}\t${error.hostname}`,
+        "userHandlerErr.log"
       );
       throw makeHttpError({
-        errorMessage: err.message,
+        errorMessage: error.message,
         statusCode: 400
       });
     }
@@ -60,21 +65,30 @@ module.exports = {
 
       //basic verification
       if (!email || !password) {
-        throw new RequiredParameterError("email or password")
+        return makeHttpError({
+          errorMessage: "Missing email or password",
+          statusCode: 400
+        });
       }
 
       try {
         //check the existance of this user in DB
         let existingUser = await dbUserHandler.findUserByEmailForLogin({ email });
-        console.log(" checking for the xistence of user in loginUserUseCaseHandler", existingUser);
+
         if (!existingUser?.id) {
-          throw new Error("USER NOT FOUND! LOGGIN FIRST");
+          return makeHttpError({
+            errorMessage: "USER NOT FOUND! LOGGIN FIRST",
+            statusCode: 401
+          });
         }
 
         //check the password
         const matchPasswd = await bcrypt.compare(password, existingUser.password);
         if (!matchPasswd) {
-          throw new InvalidPropertyError("No Matching! UNAUTHORIZED");
+          return makeHttpError({
+            errorMessage: "Bad credentials! UNAUTHORIZED",
+            statusCode: 401
+          });
         }
 
         //create the JWT
@@ -100,9 +114,12 @@ module.exports = {
         console.log("error from login use case: ", error);
         logEvents(
           `${error.no}:${error.code}\t${error.name}\t${error.message}`,
-          "useCaseHandlerErr.log"
+          "userHandlerErr.log"
         );
-        throw new Error(" failed to login: ", error.stack);
+        return makeHttpError({
+          errorMessage: "failed to log in",
+          statusCode: 500
+        });;
       }
 
     }
@@ -126,7 +143,7 @@ module.exports = {
       } catch (error) {
         logEvents(
           `${error.no}:${error.code}\t${error.name}\t${error.message}`,
-          "useCaseHandlerErr.log"
+          "userHandlerErr.log"
         );
         throw new Error("Error fetching all users: " + error.stack);
       }
@@ -165,7 +182,7 @@ module.exports = {
         console.log("Error from fetching user  use case handler: ", error);
         logEvents(
           `${error.no}:${error.code}\t${error.name}\t${error.message}`,
-          "useCaseHandlerErr.log"
+          "userHandlerErr.log"
         );
         throw new Error("Error fetching user use case: " + error.stack);
       }
@@ -213,7 +230,7 @@ module.exports = {
       console.log("Error from updating  use case handler: ", error);
       logEvents(
         `${error.no}:${error.code}\t${error.name}\t${error.message}`,
-        "useCaseHandlerErr.log"
+        "userHandlerErr.log"
       );
       throw new Error("Error updating user: " + error.stack);
     }
@@ -251,7 +268,7 @@ module.exports = {
         console.log("Error from deleting  use case handler: ", error);
         logEvents(
           `${error.no}:${error.code}\t${error.name}\t${error.message}`,
-          "useCaseHandlerErr.log"
+          "userHandlerErr.log"
         );
         throw new Error("Error deleting user: " + error.stack);
       }
@@ -299,7 +316,7 @@ module.exports = {
         console.log("Error from refresh token use case handler: ", error);
         logEvents(
           `${error.no}:${error.code}\t${error.name}\t${error.message}`,
-          "useCaseHandlerErr.log"
+          "userHandlerErr.log"
         );
         throw new Error("Error refreshing token: ", error);
       }
@@ -323,7 +340,7 @@ module.exports = {
         console.log("Error from logoutUseCase user use case handler: ", error);
         logEvents(
           `${error.no}:${error.code}\t${error.name}\t${error.message}`,
-          "useCaseHandlerErr.log"
+          "userHandlerErr.log"
         );
         throw new Error("Error logging out: " + error.stack);
       }
@@ -353,7 +370,7 @@ module.exports = {
         console.log("Error from block user use case handler: ", error);
         logEvents(
           `${error.no}:${error.code}\t${error.name}\t${error.message}`,
-          "useCaseHandlerErr.log"
+          "userHandlerErr.log"
         );
         throw new Error("Error block user: " + error.stack);
       }
@@ -383,11 +400,10 @@ module.exports = {
         console.log("Error from unblock user use case handler: ", error);
         logEvents(
           `${error.no}:${error.code}\t${error.name}\t${error.message}`,
-          "useCaseHandlerErr.log"
+          "userHandlerErr.log"
         );
         throw new Error("Error unblock user: " + error.stack);
       }
     }
   }
-
 }

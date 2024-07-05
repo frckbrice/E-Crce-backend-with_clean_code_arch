@@ -11,7 +11,7 @@ const {
     unBlockUserController
 } = require("./user-auth-controller");
 const {
-    registerUserUserCaseHandler,
+    registerUserUseCaseHandler,
     loginUserUseCaseHandler,
     logoutUseCaseHandler,
     deleteUserUseCaseHandler,
@@ -23,50 +23,53 @@ const {
     unBlockUserUseCaseHandler
 } = require("../../../application-business-rules/use-cases/user");
 
+const { makeHttpError } = require("../../validators-errors/http-error");
+const { logEvents } = require("../../middlewares/loggers/logger");
+
 const {
     UniqueConstraintError,
     InvalidPropertyError
 } = require("../../validators-errors/errors");
 
 const registerUserControllerHandler = registerUserController({
-    registerUserUserCaseHandler, UniqueConstraintError,
-    InvalidPropertyError
+    registerUserUseCaseHandler, UniqueConstraintError,
+    InvalidPropertyError, makeHttpError, logEvents
 });
 const loginUserControllerHandler = loginUserController({
     loginUserUseCaseHandler, UniqueConstraintError,
-    InvalidPropertyError
+    InvalidPropertyError, makeHttpError, logEvents
 });
 const deleteUserControllerHandler = deleteUserController({
     deleteUserUseCaseHandler, UniqueConstraintError,
-    InvalidPropertyError
+    InvalidPropertyError, makeHttpError, logEvents
 });
 const findAllUsersControllerHandler = findAllUsersController({
     findAllUsersUseCaseHandler, UniqueConstraintError,
-    InvalidPropertyError
+    InvalidPropertyError, makeHttpError, logEvents
 });
 const findOneUserControllerHandler = findOneUserController({
     findOneUserUseCaseHandler, UniqueConstraintError,
-    InvalidPropertyError
+    InvalidPropertyError, makeHttpError, logEvents
 });
 const updateUserControllerHandler = updateUserController({
     updateUserUseCaseHandler, UniqueConstraintError,
-    InvalidPropertyError
+    InvalidPropertyError, makeHttpError, logEvents
 });
 const logoutUserControllerHandler = logoutUserController({
     logoutUseCaseHandler, UniqueConstraintError,
-    InvalidPropertyError
+    InvalidPropertyError, makeHttpError, logEvents
 });
 const blockUserControllerHandler = blockUserController({
     blockUserUseCaseHandler, UniqueConstraintError,
-    InvalidPropertyError
+    InvalidPropertyError, makeHttpError, logEvents
 });
 const unBlockUserControllerHandler = unBlockUserController({
     unBlockUserUseCaseHandler, UniqueConstraintError,
-    InvalidPropertyError
+    InvalidPropertyError, makeHttpError, logEvents
 });
 
 
-const refreshTokenUserControllerHandler = refreshTokenUserController({ refreshTokenUseCaseHandler });
+const refreshTokenUserControllerHandler = refreshTokenUserController({ refreshTokenUseCaseHandler, makeHttpError, logEvents });
 
 
 

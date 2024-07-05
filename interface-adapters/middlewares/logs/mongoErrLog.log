@@ -35,3 +35,93 @@
 2024-06-21	21:34:06	0a21fc6a-f98c-478b-bde9-0ef212251161	undefined:undefined	undefined	undefined
 2024-06-21	21:38:52	68d30709-9a1d-4cb6-b283-77d6e7ed7a68	undefined:undefined	undefined	undefined
 2024-06-21	21:39:30	8296ba82-a8b0-43c7-a3a1-f60bfb76536d	undefined:undefined	undefined	undefined
+2024-06-24	17:19:50	998349a5-e8ce-4627-93dc-19f92154c299	undefined:ESERVFAIL	querySrv	_mongodb._tcp.cluster1.syqo4c0.mongodb.net
+2024-06-27	10:52:49	843f8d23-af07-4423-9951-e9e355ad0a2b	undefined:undefined	undefined	undefined
+2024-06-27	10:52:52	56828ed1-0619-447e-ac0b-b7c059ce9ff9	undefined:undefined	undefined	undefined
+2024-06-27	10:53:33	fb0c1106-2226-4a65-9278-c8b43a8bac72	undefined:undefined	undefined	undefined
+2024-06-27	10:54:14	d4359ddf-d5b0-48ca-938b-15ec32e75214	undefined:undefined	undefined	undefined
+2024-06-27	10:57:01	da38123a-6ffd-4a29-bad1-0c32d3e0efbc	undefined:undefined	undefined	undefined
+2024-06-27	15:55:13	5a903e81-b341-42ef-8aac-c69f3554d3ee	undefined:undefined	undefined	undefined
+2024-06-27	15:56:11	fab01190-af63-41c4-9983-7fbd29e45ed8	undefined:undefined	undefined	undefined
+2024-06-28	20:54:34	2652c966-63b9-436e-a27d-d8f5616d3d27	undefined:undefined	undefined	undefined
+2024-06-28	20:55:29	ba8f4534-8732-432c-bfa0-f38b788fb93e	undefined:undefined	undefined	undefined
+2024-06-28	20:56:51	59589f4b-a766-479d-bfa5-5e2d5f5fa397	undefined:undefined	undefined	undefined
+2024-06-28	20:57:39	648fbb5f-c998-49e7-8c06-3f9b6e042f38	undefined:undefined	undefined	undefined
+2024-06-28	20:59:40	da49fa40-5eba-424f-965a-9ef774270b36	undefined:undefined	undefined	undefined
+2024-06-28	21:00:29	ac7515d2-5afc-4faf-b550-7f694f48f5ce	undefined:undefined	undefined	undefined
+2024-06-28	21:04:17	91401b99-2bb4-44a7-8665-90937414dae3	undefined:undefined	undefined	undefined
+2024-06-28	21:08:47	3afe4e4e-b59f-4659-a969-1c12d31628c1	undefined:undefined	undefined	undefined
+2024-06-28	21:09:47	ecd539a5-665c-4293-b4ac-29d3c8df5a41	undefined:undefined	undefined	undefined
+2024-06-28	21:12:25	eec03913-626f-4510-8fb2-faf308c1bc3a	undefined:undefined	undefined	undefined
+2024-06-28	21:15:32	5965f6c1-574f-41fa-8c27-86dc4c8e759b	undefined:undefined	undefined	undefined
+2024-06-28	21:16:05	ce739586-a825-4b02-9116-aab30cc65984	undefined:undefined	undefined	undefined
+2024-06-28	21:16:54	24f669b9-0519-4e8c-bd34-0ac40b8f0c03	undefined:undefined	undefined	undefined
+2024-06-28	21:17:44	cd6d8fe0-51f1-49db-993e-1634cbdfae01	undefined:undefined	undefined	undefined
+2024-06-28	21:19:01	6e13641f-d324-43e0-9ec3-cbed9ed8173c	undefined:undefined	undefined	undefined
+2024-06-28	21:19:43	85b2f29f-ce9b-4c35-8cd8-75276bdcf2a5	undefined:undefined	undefined	undefined
+2024-06-28	21:20:17	0bbd89da-1d84-4255-a6fa-32f40a91a520	undefined:undefined	undefined	undefined
+2024-06-28	21:22:21	8cd36621-7728-4767-9c9f-0db4b071bbe6	undefined:undefined	undefined	undefined
+2024-06-28	21:35:26	3f17a2e0-51cd-4764-9ade-4706e8726643	undefined:undefined	undefined	undefined
+2024-06-28	21:38:15	e2bf8dcd-391d-4223-8e66-78b96da2a5b1	undefined:undefined	undefined	undefined
+2024-06-28	21:39:37	56cd0de6-1ea1-44ff-8d1b-19f54731c217	undefined:undefined	undefined	undefined
+2024-06-28	21:40:32	6e26fa47-e848-4855-9190-f1ef38f91cb1	undefined:undefined	undefined	undefined
+2024-06-28	21:41:29	e5cc9174-50e7-4332-9e8b-e45947e446f6	undefined:undefined	undefined	undefined
+2024-06-28	21:43:33	32cce06f-d77c-466d-a5d7-2d2e0e037dce	undefined:undefined	undefined	undefined
+2024-06-28	21:46:42	def753c4-2643-4a4b-873c-3b75fcc1e625	undefined:undefined	undefined	undefined
+2024-06-28	22:01:01	48f98b1d-c2af-462a-8189-8d931386ea4e	undefined:4038A38B88760000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:01:01	3392023f-1606-42a8-8e27-2542d9cb70c0	undefined:undefined	undefined	undefined
+2024-06-28	22:02:08	6f0c94cb-98f8-4b60-867e-6a146f3ccf9a	undefined:40F889E1647C0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:05:01	67765f06-0f5f-4e72-a71b-6e29b04dcbe5	undefined:4028E7DC19730000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:06:36	ecd00229-a116-4f4f-9e48-5d89bc4080ca	undefined:4008264FB8720000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:08:56	8250d0fc-3734-4737-bd23-c03fc36bc455	undefined:40C8E61CBA710000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:09:40	6352df67-1ca3-4747-91a3-2f9f788ce067	undefined:40C8A7EAEF7A0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:46:44	313e1b58-643f-4e1b-9cab-fabf15bb03d8	undefined:40D88DE1C77D0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:48:44	ef4cbab8-e19d-487a-81f4-603655345f38	undefined:40084C376B780000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:50:32	a70e6056-3cbd-45bb-a7f9-5d4f84ededba	undefined:40184B42AA780000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:51:14	b1e03842-4e78-473c-9365-76ec09300e34	undefined:400863E7AA7B0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:52:37	b1ac3046-325e-40d7-b2ed-484b24944fbf	undefined:4058EF8C1B730000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	22:53:59	2b6b5818-9e60-419a-b934-ffe3ca79c6f5	undefined:40F84B7B17790000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	23:09:09	9122d901-9e60-4855-a942-9c5d19c62bd6	undefined:40E88290267A0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	23:15:56	ce13b2cd-3ae4-4196-9052-cbec9b8ad0b1	undefined:4078439A24750000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	23:29:16	67f1a707-f3fc-458c-bff7-ea7e9d02efdf	undefined:40688F6E337C0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	23:32:25	3b63cd38-1b6f-47f3-aeef-2c991bf5243c	undefined:40B8FFAA46760000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	23:33:28	ee678a35-b182-48bd-a9a8-b59832e0b1fb	undefined:40A886D82E7D0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	23:34:34	bece17a4-7241-4960-b324-793517c6e66a	undefined:40C84EBC48760000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-28	23:36:51	5c8ca267-6811-4e2a-8327-98ed9890498e	undefined:40D825FB2E7A0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-29	08:14:28	bf5e274d-363d-453f-818b-dde11ceb8c9c	undefined:40D82902CC710000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-29	08:15:01	8ff9c5aa-5c41-430f-87ec-2e237157fdeb	undefined:4018640FDA7B0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-29	08:15:55	a420a2a5-d426-41dc-923a-0cefdd3fbbaa	undefined:40E82710C6740000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-29	08:18:25	ce585325-920c-4180-a021-0708f9216bcc	undefined:40C804B1537B0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-29	08:19:27	d8e35df4-6025-4c1d-a90e-2d8b2fd47592	undefined:40F80A970C750000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-29	08:21:00	15379e50-447a-4a89-9b41-c126bd41d962	undefined:40E84344D5770000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-29	08:22:09	27916073-056e-48fb-a9cb-1f239b68eae0	undefined:400847E6997D0000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-06-29	08:23:05	65072961-0699-4c5f-b4b1-c0627b59834f	undefined:400811D1F4700000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined
+2024-07-04	20:30:49	627dba76-ad4f-494d-9748-486930a8eb79	undefined:40388ADB40740000:error:0A000438:SSL routines:ssl3_read_bytes:tlsv1 alert internal error:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:1590:SSL alert number 80
+	undefined	undefined

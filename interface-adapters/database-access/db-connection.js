@@ -1,4 +1,5 @@
 const MongoClient = require("mongodb").MongoClient;
+const { MongoServerSelectionError, MongoServerClosedError, MongoServerError } = require("mongodb");
 const { logEvents } = require("../../interface-adapters/middlewares/loggers/logger")
 module.exports = {
 
@@ -14,10 +15,12 @@ module.exports = {
             await client.connect();
         } catch (err) {
             console.log("error connecting to database", err);
-            logEvents(
-                `${err.no}:${err.code}\t${err.syscall}\t${err.hostname}`,
-                "mongoErrLog.log"
-            );
+            if (err instanceof MongoServerSelectionError || MongoServerClosedError || MongoServerError) {
+                logEvents(
+                    `${err.no}:${err.message}\t${err.syscall}\t${err.hostname}`,
+                    "mongoErrLog.log"
+                );
+            }
         }
 
         // Provide the name of the database and collection you want to use.

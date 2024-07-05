@@ -1,5 +1,4 @@
 node_modules
 .env
 
-/interface-adapters/middlewares/logs/
-logs
+/interface-adapters/middlewares/logs

@@ -13,7 +13,7 @@ const app = express();
 
 const PORT = process.env.PORT || 5000;
 var cookieParser = require('cookie-parser');
-const corsOptions = require('./interface-adapters/config/corsOptions.Js');
+const corsOptions = require('./interface-adapters/middlewares/config/corsOptions.Js');
 
 
 // databae connetion call function

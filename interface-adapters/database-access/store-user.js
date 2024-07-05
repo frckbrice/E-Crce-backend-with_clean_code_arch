@@ -22,16 +22,18 @@ async function findUserByEmail(email, dbconnection) {
         if (!user) {
             return null;
         }
-        return {
-            id: user._id.toString(),
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            mobile: user.mobile,
-            active: user.active,
-            roles: user.roles,
-            isBlocked: user.isBlocked
-        };
+        delete user.password;
+        return user;
+        // {
+        //     id: user._id.toString(),
+        //     email: user.email,
+        //     firstName: user.firstName,
+        //     lastName: user.lastName,
+        //     mobile: user.mobile,
+        //     active: user.active,
+        //     roles: user.roles,
+        //     isBlocked: user.isBlocked
+        // };
 
     } catch (error) {
         console.log("error checking for thexistence of user in DB", error);

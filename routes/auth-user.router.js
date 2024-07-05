@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const { makeResponseCallback } = require("../interface-adapters/adapter/request-response-adapter");
+const makeResponseCallback = require("../interface-adapters/adapter/request-response-adapter");
 const {
     registerUserControllerHandler,
     loginUserControllerHandler,
