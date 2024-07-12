@@ -1,16 +1,27 @@
 
 
 // create product controller
-const createProductController = ({ createProductUseCaseHandler, createProductDbHandler, errorHandlers, makeHttpError, logEvents }) => async function createProductControllerHandler(httpRequest) {
+const createProductController = ({ createProductUseCaseHandler, dbProductHandler, errorHandlers, makeHttpError, logEvents }) => async function createProductControllerHandler(httpRequest) {
 
     const { UniqueConstraintError, InvalidPropertyError } = errorHandlers;
 
-    const { body } = httpRequest;
+    let { body } = httpRequest;
     if (!Object.keys(body).length && body.constructor === Object) {
         return makeHttpError({
             statusCode: 400,
             errorMessage: 'No product data provided'
         });
+    }
+
+    if (typeof body === 'string') {
+        try {
+            body = JSON.parse(body);
+        } catch {
+            return makeHttpError({
+                statusCode: 400,
+                errorMessage: 'Bad request. POST body must be valid JSON.'
+            })
+        }
     }
 
     //extract appropriate data for use case
@@ -50,19 +61,22 @@ const createProductController = ({ createProductUseCaseHandler, createProductDbH
     };
 
 
-    return createProductUseCaseHandler({ createProductDbHandler, errorHandlers, productData })
+    return createProductUseCaseHandler({
+        createProductDbHandler: dbProductHandler.createProductDbHandler, errorHandlers, productData
+    })
         .then(createdProduct => {
 
             return {
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    "x-content-type-options": "nosniff"
                 },
                 statusCode: 201,
-                data: JSON.stringify(createdProduct)
+                data: { createdProduct }
             };
         }).catch(e => {
             logEvents(
-                `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                `${e.no}:${e.ReferenceError}\t${e.name}\t${e.name}\t${e.message}`,
                 "controllerHandlerErr.log"
             );
             console.log("error from createProductController controller handler: ", e);
@@ -72,6 +86,211 @@ const createProductController = ({ createProductUseCaseHandler, createProductDbH
 
 }
 
+// find one product controller 
+const findOneProductController = ({
+    dbProductHandler, findOneProductUseCaseHandler, logEvents, errorHandlers }) => async function findOneProductControllerHandler(httpRequest) {
+
+        const { productId } = httpRequest.params;
+        if (!productId) {
+            return makeHttpError({
+                statusCode: 400,
+                errorMessage: 'No product Id provided'
+            });
+        }
+        try {
+            const product = await findOneProductUseCaseHandler({ productId, logEvents, findOneProductDbHandler: dbProductHandler.findOneProductDbHandler, errorHandlers });
+            return {
+                headers: {
+                    'Content-Type': 'application/json',
+                    "x-content-type-options": "nosniff"
+                },
+                statusCode: 201,
+                data: { product }
+            };
+        } catch (e) {
+            logEvents(
+                `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                "controllerHandlerErr.log"
+            );
+            console.log("error from findOneProductController controller handler: ", e);
+            return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode });
+        }
+    }
+
+
+// find all product controller
+const findAllProductController = ({ dbProductHandler, findAllProductUseCaseHandler, logEvents }) => async function findAllProductControllerHandler(httpRequest) {
+
+
+    const filterOptions = httpRequest.query;
+    return findAllProductUseCaseHandler({
+        dbProductHandler,
+        logEvents,
+        filterOptions
+    }).then((products) => {
+
+        // console.log("products from findAllProductController: ", products);
+        return {
+            headers: {
+                'Content-Type': 'application/json',
+                "x-content-type-options": "nosniff"
+            },
+            statusCode: 201,
+            data: { products }
+        };
+    }).catch(e => {
+        logEvents(
+            `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+            "controllerHandlerErr.log"
+        );
+        console.log("error from findAllProductController controller handler: ", e);
+        return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode });
+    });
+
+}
+
+// delete product controller 
+const deleteProductController = ({ dbProductHandler, deleteProductUseCaseHandler, makeHttpError, logEvents, errorHandlers }) => async function deleteProductControllerHandler(httpRequest) {
+
+    const { productId } = httpRequest.params;
+    if (!productId) {
+        return makeHttpError({
+            statusCode: 400,
+            errorMessage: 'No product Id provided'
+        });
+    }
+    return deleteProductUseCaseHandler({ productId, logEvents, dbProductHandler, errorHandlers })
+        .then((deleted) => {
+
+            // console.log("product from deleteProductController: ", deleted);
+            return {
+                headers: {
+                    'Content-Type': 'application/json',
+                    "x-content-type-options": "nosniff"
+                },
+                statusCode: deleted.deletedCount === 0 ? 500 : 200,
+                data: { deleted }
+            };
+        }).catch(e => {
+            logEvents(
+                `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                "controllerHandlerErr.log"
+            );
+            console.log("error from deleteProductController controller handler: ", e);
+            return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode || 500 });
+        })
+
+        ;
+
+}
+
+// update product controller
+const updateProductController = ({ dbProductHandler, updateProductUseCaseHandler, makeHttpError, logEvents, errorHandlers }) => async function updateProductControllerHandler(httpRequest) {
+
+
+    const { productId } = httpRequest.params;
+    const { body } = httpRequest;
+    if (!productId || !Object.keys(body).length && body.constructor == Object) {
+        return makeHttpError({
+            statusCode: 400,
+            errorMessage: 'No product Id or update data provided'
+        });
+    }
+
+    if (typeof body === 'string') {
+        try {
+            body = JSON.parse(body);
+        } catch {
+            return makeHttpError({
+                statusCode: 400,
+                errorMessage: 'Bad request. POST body must be valid JSON.'
+            })
+        }
+    }
+
+    return updateProductUseCaseHandler({ productId, updateData: body, logEvents, dbProductHandler, errorHandlers })
+        .then((newProduct) => {
+            return {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Last-Modified': new Date(newProduct.lastModified).toUTCString(),
+                    "x-content-type-options": "nosniff"
+                },
+                statusCode: 200,
+                data: { newProduct }
+            };
+        })
+        .catch(e => {
+            logEvents(
+                `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                "controllerHandlerErr.log"
+            );
+            console.log("error from updateProductController controller handler: ", e);
+            if (e.name === 'RangeError')
+                return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode || 404 })
+            return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode || 500 });
+        });
+
+}
+
+// rate product controller 
+const rateProductController = ({ dbProductHandler, rateProductUseCaseHandler, makeHttpError, logEvents, errorHandlers }) => async function rateProductControllerHandler(httpRequest) {
+    const {
+        userId,
+        ratingValue,
+        productId,
+    } = httpRequest.body;
+
+    if (!productId || !userId || !ratingValue) {
+        return makeHttpError({
+            statusCode: 400,
+            errorMessage: 'Bad credentials'
+        });
+    }
+
+    return rateProductUseCaseHandler({
+        userId, ratingValue, productId, logEvents, dbProductHandler, errorHandlers
+    }).then((newProduct) => {
+
+        if (newProduct.error)
+            return {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Last-Modified': new Date(newProduct.lastModified).toUTCString(),
+                    "x-content-type-options": "nosniff"
+                },
+                statusCode: newProduct.error.code || 500,
+                data: { newProduct }
+            };
+        else
+            return {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Last-Modified': new Date(newProduct.lastModified).toUTCString(),
+                    "x-content-type-options": "nosniff"
+                },
+                statusCode: 201,
+                data: { newProduct }
+            };
+    }).catch(e => {
+        logEvents(
+            `${e.no}:${e.type}\t${e.name}\t${e.message}`,
+            "controllerHandlerErr.log"
+        );
+        console.error("error from rateProductController controller handler: ", e);
+        if (e.name === 'RangeError')
+            return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode || 404 })
+        return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode || 500 });
+    });
+
+}
+
+
 module.exports = () => Object.freeze({
     createProductController,
+    findOneProductController,
+    findAllProductController,
+    deleteProductController,
+    updateProductController,
+    rateProductController
 })

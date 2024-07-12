@@ -1,22 +1,22 @@
-const { createProductDbHandler } = require("../../database-access")
+const { dbProductHandler } = require("../../database-access")
 
 const {
     createProductController,
-    // updateProductController,
-    // deleteProductController,
-    // findAllProductController,
-    // findOneProductController,
-    // findProductRatingController,
+    deleteProductController,
+    updateProductController,
+    findAllProductController,
+    findOneProductController,
+    rateProductController
     // findBestUserRaterController
 } = require("./product-controller")();
 
 const {
     createProductUseCaseHandler,
-    // updateProductUseHandler,
-    // deleteProductUseHandler,
-    // findAllProductUseHandler,
-    // findProductUseHandler,
-    // findProductRatingUseCaseHandler,
+    updateProductUseCaseHandler,
+    deleteProductUseCaseHandler,
+    findAllProductUseCaseHandler,
+    findOneProductUseCaseHandler,
+    rateProductUseCaseHandler
     // findBestUserRaterUseCaseHandler
 } = require("../../../application-business-rules/use-cases/products");
 const { makeHttpError } = require("../../validators-errors/http-error");
@@ -26,11 +26,14 @@ const { logEvents } = require("../../middlewares/loggers/logger");
 
 
 
-const createProductControllerHandler = createProductController({ createProductUseCaseHandler, createProductDbHandler, errorHandlers, makeHttpError, logEvents });
-// const updateProductControllerHandler = updateProductController({ dbProductHandler, updateProductUseHandler, errorHandlers });
-// const deleteProductControllerHandler = deleteProductController({ dbProductHandler, deleteProductUseHandler, errorHandlers });
-// const findAllProductsControllerHandler = findAllProductController({ dbProductHandler, findAllProductUseHandler, errorHandlers });
-// const findOneProductControllerHandler = findOneProductController({ dbProductHandler, findProductUseHandler, errorHandlers });
+const createProductControllerHandler = createProductController({ dbProductHandler, dbProductHandler, errorHandlers, makeHttpError, logEvents });
+const updateProductControllerHandler = updateProductController({ dbProductHandler, updateProductUseCaseHandler, makeHttpError, logEvents, errorHandlers });
+const deleteProductControllerHandler = deleteProductController({ dbProductHandler, deleteProductUseCaseHandler, makeHttpError, logEvents, errorHandlers });
+const findAllProductControllerHandler = findAllProductController({ dbProductHandler, findAllProductUseCaseHandler, logEvents });
+const findOneProductControllerHandler = findOneProductController({
+    dbProductHandler, findOneProductUseCaseHandler, logEvents, errorHandlers
+});
+const rateProductControllerHandler = rateProductController({ dbProductHandler, rateProductUseCaseHandler, makeHttpError, logEvents, errorHandlers });
 // const findProductRatingControllerHandler = findProductRatingController({ dbProductHandler, findProductRatingUseCaseHandler, errorHandlers });
 // const findBestUserRaterControllerHandler = findBestUserRaterController({ dbProductHandler, findBestUserRaterUseCaseHandler, errorHandlers });
 
@@ -38,10 +41,10 @@ const createProductControllerHandler = createProductController({ createProductUs
 module.exports = {
     createProductControllerHandler,
 
-    // updateProductControllerHandler,
-    // deleteProductControllerHandler,
-    // findAllProductsControllerHandler,
-    // findOneProductControllerHandler,
-    // findProductRatingControllerHandler,
+    updateProductControllerHandler,
+    deleteProductControllerHandler,
+    findAllProductControllerHandler,
+    findOneProductControllerHandler,
+    rateProductControllerHandler
     // findBestUserRaterControllerHandler
 }

@@ -34,6 +34,3 @@ module.exports = (controller) => function responseAdapterHandler(req, res) {
         .send({ error: 'An unkown error occurred.', error: e })
     })
 }
-
-
-

@@ -1,7 +1,6 @@
 
 
-const { makeHttpError } = require("../../validators-errors/http-error");
-const { logEvents } = require("../../middlewares/loggers/logger");
+
 
 
 module.exports = {
@@ -16,7 +15,7 @@ module.exports = {
      * @throws {Error} - If the request body is empty or not an object, throws an HTTP error with status code 400.
      * @throws {Error} - If there is an error during user registration, throws an HTTP error with the appropriate status code.
      */
-    registerUserController: ({ registerUserUserCaseHandler }) => {
+    registerUserController: ({ registerUserUseCaseHandler, makeHttpError, logEvents }) => {
         return async function registerUserControllerHandler(httpRequest) {
             const { body } = httpRequest;
             if (Object.keys(body).length === 0 && body.constructor === Object) {
@@ -29,27 +28,20 @@ module.exports = {
             let userInfo = typeof body === 'string' ? JSON.parse(body) : body;
 
             try {
-                const registeredUser = await registerUserUserCaseHandler(userInfo);
+                const registeredUser = await registerUserUseCaseHandler(userInfo);
                 return {
                     headers: {
                         'Content-Type': 'application/json'
                     },
                     statusCode: registeredUser.statusCode || 201,
-                    data: JSON.stringify(registeredUser.data || registeredUser)
+                    data: registeredUser.data || registeredUser
                 };
             } catch (e) {
                 console.error("error from register controller: ", e)
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
-                // const statusCode =
-                //     e instanceof UniqueConstraintError
-                //         ? 409
-                //         : e instanceof InvalidPropertyError ||
-                //         e instanceof RequiredParameterError
-                //             ? 400
-                //             : 500;
                 return makeHttpError({
                     errorMessage: e.message,
                     statusCode: e.statusCode,
@@ -71,7 +63,7 @@ module.exports = {
      * @throws {makeHttpError} If there is an error during the login process.
      */
     loginUserController: ({ loginUserUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError }) => {
+        InvalidPropertyError, makeHttpError, logEvents }) => {
         return async function loginUserControllerHandler(httpRequest) {
 
             const { email, password } = httpRequest.body;
@@ -105,7 +97,7 @@ module.exports = {
                 };
             } catch (e) {
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
                 console.log("error from loginUserController controller handler: ", e);
@@ -122,7 +114,7 @@ module.exports = {
     * @return {Promise<Object>} An object containing the headers, status code, and data of the refreshed access token in JSON format.
     */
     refreshTokenUserController: ({ refreshTokenUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError }) => async function refreshTokenUserControllerHandler(httpRequest) {
+        InvalidPropertyError, makeHttpError, logEvents }) => async function refreshTokenUserControllerHandler(httpRequest) {
 
             //Iam facing problem with cooki-parser
             const { body: { refreshToken } } = httpRequest;
@@ -158,7 +150,7 @@ module.exports = {
                 };
             } catch (e) {
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.TypeError}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
                 console.log("error from refresh token controller handler: ", e);
@@ -180,7 +172,7 @@ module.exports = {
      * @throws {makeHttpError} If there is an error during the logout process.
      */
     logoutUserController: ({ logoutUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError }) => {
+        InvalidPropertyError, makeHttpError, logEvents }) => {
         return async function logoutUserControllerHandler(httpRequest) {
 
             const { refreshToken } = httpRequest.body;
@@ -219,7 +211,7 @@ module.exports = {
                 };
             } catch (e) {
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
                 console.log("error from logoutUserController controller handler: ", e);
@@ -230,7 +222,7 @@ module.exports = {
     },
 
     deleteUserController: ({ deleteUserUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError }) => {
+        InvalidPropertyError, makeHttpError, logEvents }) => {
         return async function deleteUserControllerHandler(httpRequest) {
             const { userId } = httpRequest.params;
             if (!userId) {
@@ -250,7 +242,7 @@ module.exports = {
                 };
             } catch (e) {
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
                 console.log("error from deleteUserController controller handler: ", e);
@@ -261,7 +253,7 @@ module.exports = {
     },
 
     updateUserController: ({ updateUserUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError }) => {
+        InvalidPropertyError, makeHttpError, logEvents }) => {
         return async function updateUserControllerHandler(httpRequest) {
 
             const { userId } = httpRequest.params;
@@ -283,7 +275,7 @@ module.exports = {
                 };
             } catch (e) {
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
                 console.log("error from updateUserController controller handler: ", e);
@@ -294,7 +286,7 @@ module.exports = {
     },
 
     findOneUserController: ({ findOneUserUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError }) => {
+        InvalidPropertyError, makeHttpError, logEvents }) => {
         return async function findOneUserControllerHandler(httpRequest) {
             const { userId } = httpRequest.params;
             if (!userId) {
@@ -314,7 +306,7 @@ module.exports = {
                 };
             } catch (e) {
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
                 console.log("error from findOneUserController controller handler: ", e);
@@ -330,7 +322,7 @@ module.exports = {
      * @return {Object} Contains headers, statusCode, and data of users in JSON format.
      */
     findAllUsersController: ({ findAllUsersUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError }) => {
+        InvalidPropertyError, makeHttpError, logEvents }) => {
         return async function findAllUsersControllerHandler() {
             try {
                 const users = await findAllUsersUseCaseHandler();
@@ -343,7 +335,7 @@ module.exports = {
                 };
             } catch (e) {
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
                 console.log("error from findAllUsersController controller handler: ", e);
@@ -357,7 +349,7 @@ module.exports = {
 
     //block user
     blockUserController: ({ blockUserUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError }) => async function blockUserControllerHandler(httpRequest) {
+        InvalidPropertyError, makeHttpError, logEvents }) => async function blockUserControllerHandler(httpRequest) {
             const { userId } = httpRequest.params;
             if (!userId) {
                 return makeHttpError({
@@ -377,7 +369,7 @@ module.exports = {
                 };
             } catch (e) {
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
                 console.log("error from blockUserController controller handler: ", e);
@@ -390,7 +382,7 @@ module.exports = {
 
     //unblock user
     unBlockUserController: ({ unBlockUserUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError }) => async function unBlockUserControllerHandler(httpRequest) {
+        InvalidPropertyError, makeHttpError, logEvents }) => async function unBlockUserControllerHandler(httpRequest) {
             const { userId } = httpRequest.params;
             if (!userId) {
                 return makeHttpError({
@@ -410,7 +402,7 @@ module.exports = {
                 };
             } catch (e) {
                 logEvents(
-                    `${e.no}:${e.code}\t${e.name}\t${e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
                     "controllerHandlerErr.log"
                 );
                 console.log("error from unBlockUserController controller handler: ", e);
@@ -419,4 +411,18 @@ module.exports = {
             }
         }
     ,
+
+
+    /**
+     * 
+     *  //validate mongodb id
+    function validateId(id) {
+        if (!ObjectId.isValid(id)) {
+            throw new InvalidPropertyError(
+                `Invalid ID`
+            )
+        }
+        return id;
+    }
+     */
 }

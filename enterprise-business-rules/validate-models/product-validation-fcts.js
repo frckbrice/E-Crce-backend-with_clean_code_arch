@@ -158,9 +158,45 @@ const calculateAverageRating = (totalRatings) => {
     return totalRatings.reduce((acc, curr, idx) => acc + curr * (idx + 1), 0) / resultingProductData.totalReviews;
 }
 
+// validate uuid  as ObjectId
+const validateUUID = (id, InvalidPropertyError) => {
+    // const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    // console.log(id);
+    const regex = /^[a-fA-F0-9]{24}$/; // ObjectId validation regex
+    if (!regex.test(id)) {
+        throw new InvalidPropertyError(`Invalid product ObjectId.`)
+    }
+    return id;
+}
+
+// validate rating model 
+const validateRatingModel = (ratingModel, InvalidPropertyError) => {
+    const { productId, userId, ratingValue } = ratingModel;
+
+    // validate IDs
+    const productUUID = validateUUID(productId, InvalidPropertyError);
+    const userUUID = validateUUID(userId, InvalidPropertyError);
+
+    // validate rating value
+    const validRatingValues = [1, 2, 3, 4, 5];
+    if (!ratingValue || !validRatingValues.includes(ratingValue)) {
+        throw new InvalidPropertyError(
+            `Invalid rating value.`
+        )
+    }
+
+    return {
+        productId: productUUID,
+        userId: userUUID,
+        ratingValue,
+        date: new Date().toISOString(),
+    };
+}
+
 //basic product validation 
 const basicProductValidation = ({ productData, errorHandlers }) => {
 
+    console.log("start validations: ")
     const errors = [];
     const { RequiredParameterError, InvalidPropertyError } = errorHandlers;
     const resultingProductData = {};
@@ -212,9 +248,9 @@ const basicProductValidation = ({ productData, errorHandlers }) => {
         errors.push(`Product highlights are required`);
     } else resultingProductData.highlights = productData.highlights || [];
 
-    if (productData.specifications) {
-        resultingProductData.specifications = productData.specifications || {};
-    }
+    // if (productData.specifications) {
+    //     resultingProductData.specifications = productData.specifications || {};
+    // }
     if (productData.shipping) {
         resultingProductData.shipping = productData.shipping;
     }
@@ -244,15 +280,16 @@ const basicProductValidation = ({ productData, errorHandlers }) => {
     resultingProductData.totalRatings = Array.from({ length: 5 }, () => 0);
     resultingProductData.totalReviews = 0;
     resultingProductData.totalSales = 0;
+    resultingProductData.latestRating = null;
     resultingProductData.rateAverage = 0;
-    resultingProductData.lastModified = null;
+    resultingProductData.lastModified = new Date().toISOString();
     resultingProductData.instock = Boolean(resultingProductData.inventory && resultingProductData.inventory > 0)
-
+    resultingProductData.brands = productData.brands || [];
 
     if (errors.length) {
         throw new RequiredParameterError(errors.join(', '));
     }
-    // console.log(resultingProductData);
+    console.log("end of validations: ");
     return resultingProductData;
 }
 
@@ -261,5 +298,7 @@ module.exports = () => {
         basicProductValidation,
         CalculateTotalReviews,
         calculateAverageRating,
+        validateUUID,
+        validateRatingModel
     })
 }

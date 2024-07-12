@@ -9,10 +9,13 @@ const { registerUserUseCase,
     blockUserUseCase,
     unBlockUserUseCase
 } = require("./user-handlers");
+
 const { dbUserHandler } = require("../../../interface-adapters/database-access")
 // const {loginUserUseCase} = require("./login-user");
 
-const registerUserUserCaseHandler = registerUserUseCase({ dbUserHandler });
+const entityModels = require("../../../enterprise-business-rules/entities");
+
+const registerUserUseCaseHandler = registerUserUseCase({ dbUserHandler, entityModels });
 const loginUserUseCaseHandler = loginUserUseCase({ dbUserHandler });
 const findOneUserUseCaseHandler = findOneUserUseCase({ dbUserHandler });
 const findAllUsersUseCaseHandler = findAllUsersUseCase({ dbUserHandler });
@@ -33,7 +36,7 @@ module.exports = {
     deleteUserUseCaseHandler,
     findAllUsersUseCaseHandler,
     findOneUserUseCaseHandler,
-    registerUserUserCaseHandler,
+    registerUserUseCaseHandler,
     loginUserUseCaseHandler,
     blockUserUseCaseHandler,
     unBlockUserUseCaseHandler

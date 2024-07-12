@@ -1,5 +1,8 @@
 
 const { InvalidPropertyError, RequiredParameterError } = require("../../interface-adapters/validators-errors/errors");
+
+// TODO: remove this external data storage and package here  and from here.
+// We don't respect the clean code architecture with this
 const bcrypt = require("bcrypt");
 const { ObjectId } = require("mongodb");
 
@@ -195,6 +198,9 @@ async function validateUserDataUpdates({ firstName, lastName, mobile, roles, act
     return updatedValues;
 }
 
-
-
-module.exports = { validateUserData, normalise, validateUserDataUpdates, validateId };
+module.exports = {
+    validateUserData,
+    normalise,
+    validateUserDataUpdates,
+    validateId
+};
