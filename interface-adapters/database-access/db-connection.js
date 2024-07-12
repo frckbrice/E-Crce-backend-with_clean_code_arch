@@ -3,6 +3,11 @@ const { MongoServerSelectionError, MongoServerClosedError, MongoServerError } = 
 const { logEvents } = require("../../interface-adapters/middlewares/loggers/logger")
 module.exports = {
 
+    /**
+ * Establishes a connection to the MongoDB database and returns a reference to the database.
+ *
+ * @return {Promise<Db>} A promise that resolves to a reference to the MongoDB database.
+ */
     dbconnection: async () => {
         // The MongoClient is the object that references the connection to our
         // datastore (Atlas, for example)
@@ -33,6 +38,7 @@ module.exports = {
         // operations on them.
         const database = client.db(datastoreName);
         // const userCollection = database.collection("users");
+
 
         return database;
     }

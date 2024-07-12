@@ -51,11 +51,11 @@ const findOneProductUseCase = ({ productValidation }) => async function
 
 
 // find all product use case handler
-const findAllProductsUseCase = () => findAllProductUseCaseHandler = async ({ dbProductHandler, logEvents }) => {
+const findAllProductsUseCase = () => findAllProductUseCaseHandler = async ({ dbProductHandler, logEvents, filterOptions }) => {
 
     try {
 
-        const allProducts = await dbProductHandler.findAllProductsDbHandler();
+        const allProducts = await dbProductHandler.findAllProductsDbHandler(filterOptions);
         // console.log("from find all products use case: ", allProducts);
         return Object.freeze(allProducts)
     } catch (e) {

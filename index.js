@@ -8,6 +8,7 @@ const errorHandler = require('./interface-adapters/middlewares/loggers/errorHand
 const userAndAuthRouter = require('./routes/auth-user.router.js');
 const { logger } = require('./interface-adapters/middlewares/loggers/logger.js');
 const productRouter = require('./routes/product.routes.js');
+const createIndexFn = require('./interface-adapters/database-access/db-indexes.js');
 
 const app = express();
 
@@ -19,6 +20,7 @@ const corsOptions = require('./interface-adapters/middlewares/config/corsOptions
 // databae connetion call function
 dbconnection().then((db) => {
     console.log("database connected: ", db.databaseName);
+    createIndexFn();
 });
 
 app.use(logger);

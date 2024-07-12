@@ -119,13 +119,14 @@ const findOneProductController = ({
 
 
 // find all product controller
-const findAllProductController = ({ dbProductHandler, findAllProductUseCaseHandler, logEvents }) => async function findAllProductControllerHandler() {
+const findAllProductController = ({ dbProductHandler, findAllProductUseCaseHandler, logEvents }) => async function findAllProductControllerHandler(httpRequest) {
 
-    console.log("from find all product controller")
 
+    const filterOptions = httpRequest.query;
     return findAllProductUseCaseHandler({
         dbProductHandler,
-        logEvents
+        logEvents,
+        filterOptions
     }).then((products) => {
 
         // console.log("products from findAllProductController: ", products);
@@ -240,8 +241,6 @@ const rateProductController = ({ dbProductHandler, rateProductUseCaseHandler, ma
         productId,
     } = httpRequest.body;
 
-    console.log("hit rating product controller")
-
     if (!productId || !userId || !ratingValue) {
         return makeHttpError({
             statusCode: 400,
@@ -278,7 +277,7 @@ const rateProductController = ({ dbProductHandler, rateProductUseCaseHandler, ma
             `${e.no}:${e.type}\t${e.name}\t${e.message}`,
             "controllerHandlerErr.log"
         );
-        console.log("error from rateProductController controller handler: ", e);
+        console.error("error from rateProductController controller handler: ", e);
         if (e.name === 'RangeError')
             return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode || 404 })
         return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode || 500 });

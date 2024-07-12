@@ -1,31 +1,53 @@
-import { makeDb } from '../src/data-access'
-import dotenv from 'dotenv'
-dotenv.config();
+const { dbconnection } = require('./db-connection');
+require('dotenv').config();
 
-// database collection will automatically be created if it does not exist
-// indexes will only be added if they don't exist
-//Although indexes improve query performance, adding an index has negative performance impact for write operations
-(async function setupDb() {
+// all the collections stated here are created if not exist.
+module.exports = async function setupDb() {
   console.log('Setting up database...')
+  const db = await dbconnection();
 
-  const db = await makeDb()
-  const result = await db
-    .collection('users')
-    .createIndexes([
-      { key: { id: 1 }, name: 'userId_idx' },
-      { key: { email: 1 }, name: 'email_idx' },
-      { background: true, sparse: true }
-    ], function (err, result) {
-      console.log(result);
-      callback(result);
-    });
-
-  db.collection("Rating")
-    .createIndex([{ userId: 1 }, { postId: 1 }, { background: true, sparse: true }], function (err, result) {
-      console.log(result);
-      callback(result);
-    })
+  const allProductsIndexName = await db.collection("products").listIndexes().toArray();
 
 
-  process.exit()
-})()
+  let indexArr = [];
+  // create indexes only if not exist
+  allProductsIndexName.forEach(element => {
+    if (element.name === 'productTextIndex' || element.name === 'productUniqueIndex') {
+      return;
+    }
+    indexArr = [...indexArr, db.collection('products').createIndexes([
+      {
+        key: { "title": "text", "description": "text", "category": "text", "seoKeywords": "text", "origin": "text", "variations": "text", "highlights": "text", "brand": "text" },
+        name: 'productTextIndex',
+        default_language: 'english',
+        weights: { description: 10, title: 3 }
+      },
+      { key: { title: 1, }, name: 'productUniqueIndex' }
+    ])]
+  });
+
+  const allUsersIndexName = await db.collection("users").listIndexes().toArray();
+  allUsersIndexName.forEach(element => {
+    if (element.name === 'userUniqueIndex') {
+      return;
+    }
+    indexArr = [...indexArr, db.collection('users').createIndexes([
+      { key: { email: 1, }, unique: true, name: 'userUniqueIndex' }
+    ])]
+  });
+
+  const allRatingsIndexName = await db.collection("ratings").listIndexes().toArray();
+  allRatingsIndexName.forEach(element => {
+    if (element.name === 'ratingsUniqueIndex') {
+      // db.collection('ratings').dropIndex('ratingsUniqueIndex');
+      return;
+    }
+    indexArr = [...indexArr, db.collection('ratings').createIndexes([
+      { key: { userId: 1, postId: 1 }, name: 'ratingUniqueIndex' }
+    ])]
+  });
+
+  await Promise.all([
+    ...indexArr
+  ]);
+}

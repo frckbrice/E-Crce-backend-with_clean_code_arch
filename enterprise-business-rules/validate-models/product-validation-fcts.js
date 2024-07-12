@@ -284,7 +284,7 @@ const basicProductValidation = ({ productData, errorHandlers }) => {
     resultingProductData.rateAverage = 0;
     resultingProductData.lastModified = new Date().toISOString();
     resultingProductData.instock = Boolean(resultingProductData.inventory && resultingProductData.inventory > 0)
-
+    resultingProductData.brands = productData.brands || [];
 
     if (errors.length) {
         throw new RequiredParameterError(errors.join(', '));

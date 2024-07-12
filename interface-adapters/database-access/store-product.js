@@ -57,24 +57,48 @@ const findOneProduct = async ({ productId, dbconnection }) => {
 }
 
 // find all products from the database 
-const findAllProducts = async ({ dbconnection, logEvents }) => {
+const findAllProducts = async ({ dbconnection, logEvents, ...filterOptions }) => {
+    const { category, minPrice, maxPrice, page, perPage, searchTerm } = filterOptions;
 
+    //TODO: id necessary add limiting fields. this affect the projection props
+
+    const filter = {};
+    if (category) filter.category = category;
+    if (minPrice) filter.price = { $gte: parseFloat(minPrice) };
+    if (maxPrice) filter.price = { $lte: parseFloat(maxPrice) };
+    if (searchTerm) filter.$text = { $search: searchTerm };
+
+    const projection = {
+        _id: 0, title: 1, description: 1, price: 1, category: 1, brand: 1, creationDate: 1, expirationDate: 1, origin: 1, variations: 1, salePrice: 1, slug: 1,
+        lastModified: 1,
+        instock: 1
+    };
+
+    const offset = (page - 1) * perPage;
     const db = await dbconnection();
+
     try {
-        const allProducts = await db.collection('products').find({}, {
-            projection: {
-                _id: 1, title: 1, description: 1, price: 1, category: 1, brand: 1, inventory: 1, creationDate: 1, expirationDate: 1, origin: 1, variations: 1, salePrice: 1, slug: 1, totalRatings: 1, totalReviews: 1, totalSales: 1, rateAverage: 1,
-                lastModified: 1,
-                instock: 1
-            }
-        }).toArray()
+        const allProducts = await db
+            .collection('products')
+            .find(filter)
+            .project(projection)
+            .skip(offset)
+            .limit(Number(perPage))
+            .toArray();
 
-        return allProducts.map((product) => {
-            const id = product._id.toString();
-            delete product._id;
-            return { ...product, id };
-        });
 
+        const totalProducts = await db
+            .collection('products').countDocuments(filter);
+        const totalPages = Math.ceil(totalProducts / perPage);
+        const products = allProducts.map(product => ({ ...product, id: product._id.toString() }));
+
+        return {
+            data: products,
+            totalProducts,
+            totalPages,
+            page,
+            perPage
+        };
     } catch (error) {
         console.log("Error from product DB handler: ", error);
         logEvents(
@@ -83,7 +107,7 @@ const findAllProducts = async ({ dbconnection, logEvents }) => {
         );
         return [];
     }
-}
+};
 
 // update existing product
 const updateProduct = async ({ productId, productData, dbconnection, logEvents }) => {
@@ -169,8 +193,10 @@ const rateProduct = async ({ logEvents, ...ratingModel }) => {
             const productCollection = client.db("digital-market-place-updates").collection("products");
             const ratingCollection = client.db("digital-market-place-updates").collection("ratings");
 
+            // check if the product has been rated before.
             const existingProduct = await productCollection.findOne({ _id: new ObjectId(ratingModel.productId) }, { session });
-            if (!existingProduct) {
+            if (!existingProduct) {// cannot rate ghost product.
+                session.abortTransaction();
                 return {
                     error: {
                         code: 404,
@@ -182,6 +208,7 @@ const rateProduct = async ({ logEvents, ...ratingModel }) => {
             /* find first if this user has already rate this existing product*/
             const existingRating = await ratingCollection.findOne({ userId: ratingModel.userId, productId: ratingModel.productId }, { session });
             if (existingRating) {
+                session.abortTransaction();
                 return {
                     error: {
                         code: 409,
@@ -190,17 +217,15 @@ const rateProduct = async ({ logEvents, ...ratingModel }) => {
                 };
             }
 
-            console.log("before insertion")
             /* create a new rating document */
             const newRating = await ratingCollection.insertOne(ratingModel, { session });
-            console.log("after insertion")
             const { totalRatings } = existingProduct;
             const totalReviews = totalRatings?.reduce((sum, rating) => sum + rating, 0) || 0;
-            const newAverage = totalRatings?.reduce((sum, rating, index) => sum + rating * (index + 1), 0) / (totalReviews || 1);
+            const newAverage = totalReviews ? totalRatings?.reduce((sum, rating, index) => sum + rating * (index + 1), 0) / totalReviews : existingProduct.rateAverage;
 
             /* increase the new rating value in the totalRatings array */
             for (let index = 0; index < 5; index++) {
-                if ((ratingModel.ratingValue === (index + 1))) {
+                if (ratingModel.ratingValue === (index + 1)) {
                     totalRatings[index] = totalRatings[index] + 1;
                 }
             }
@@ -224,11 +249,8 @@ const rateProduct = async ({ logEvents, ...ratingModel }) => {
                 },
                 { session }
             );
-
-            await session.commitTransaction();
-            console.log("Product rated successfully!", updatedProduct);
+            // await session.commitTransaction();
             return { updatedProduct, newRating };
-
         }, transactionOptions);
 
     } catch (error) {
@@ -244,7 +266,6 @@ const rateProduct = async ({ logEvents, ...ratingModel }) => {
         await client.close();
     }
 }
-
 // find one rating for a product based on product id and user id
 const findOneRating = async ({ productId, userId }) => {
 
@@ -267,7 +288,7 @@ module.exports = ({ dbconnection, logEvents }) => {
     return Object.freeze({
         createProductDbHandler: async (productData) => createProduct(productData, dbconnection, logEvents),
         findOneProductDbHandler: async ({ productId }) => findOneProduct({ productId, dbconnection, logEvents }),
-        findAllProductsDbHandler: async () => findAllProducts({ dbconnection, logEvents }),
+        findAllProductsDbHandler: async (filterOptions) => findAllProducts({ dbconnection, logEvents, ...filterOptions }),
         updateProductDbHandler: async ({ productId, productData }) => updateProduct({ productId, productData, dbconnection, logEvents }),
         deleteProductDbHandler: async ({ productId }) => deleteProduct({ productId, dbconnection, logEvents }),
         updateProductDbHandler: async ({ productId, ...productData }) => updatedProduct({ productId, dbconnection, logEvents, ...productData }),

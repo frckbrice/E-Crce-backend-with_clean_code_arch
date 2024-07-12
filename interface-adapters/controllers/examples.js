@@ -26,7 +26,7 @@
     }
   ],
   highlights: [ 'Comfortable', 'Stylish', '100% Cotton' ],
-  already in variations-----> ---------> specifications: { material: 'Cotton', fit: 'Regular' },
+  already in variations -----> specifications: { material: 'Cotton', fit: 'Regular' },
   seoKeywords: [ 'Comfortable', 'Stylish', '100% Cotton' ],
   salePrice: 19,
   slug: 't-shirt',
@@ -57,6 +57,8 @@
   // const uri = 'mongodb://mongodb0.example.com:27017,mongodb1.example.com:27017/?replicaSet=myRepl'
   // For a sharded cluster, connect to the mongos instances; e.g.
   // const uri = 'mongodb://mongos0.example.com:27017,mongos1.example.com:27017/'
+  
+  
   const client = new MongoClient(uri);
   await client.connect();
   // Prereq: Create collections.
@@ -84,7 +86,7 @@
     await session.withTransaction(async () => {
       const coll1 = client.db('mydb1').collection('foo');
       const coll2 = client.db('mydb2').collection('bar');
-      
+
       // Important:: You must pass the session to the operations
       await coll1.insertOne({ abc: 1 }, { session });
       await coll2.insertOne({ xyz: 999 }, { session });
