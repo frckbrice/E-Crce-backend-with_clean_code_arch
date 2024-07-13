@@ -38,7 +38,9 @@
   lastModified: null,
   instock: true,
   latestRating: null
-}https://www.amazon.de/
+}
+  
+https://www.amazon.de/
  */
 
 /***
@@ -95,6 +97,8 @@
     await session.endSession();
     await client.close();
   }
+ inventory: 1, 
 
+  http://localhost:5000/products/?page=1&perPage=3&minPrice=0&maxPrice=500&searchTerm=unique value&fields=title,price,images,category
 
 */

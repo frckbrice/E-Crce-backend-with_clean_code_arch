@@ -1,12 +1,15 @@
-const { logEvents } = require("../../interface-adapters/middlewares/loggers/logger");
 
 module.exports = {
 
-    makeUserModel: ({ productValidation }) => {
+    makeUserModel: ({ userValidationData, logEvents }) => {
         return async function makeUser({ userData, update = false }) {
 
             console.log("hit user model: ");
-            const { normalise, validateUserData, validateUserDataUpdates } = productValidation;
+            const {
+                validateUserData,
+                normalise,
+                validateUserDataUpdates,
+            } = userValidationData;
             let normalisedUserData = {}, validatedUserData = null;
             try {
                 // for update user data we have to set "update = true" from the user handler

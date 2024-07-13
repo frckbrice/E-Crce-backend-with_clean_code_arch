@@ -34,12 +34,12 @@ module.exports = {
                         'Content-Type': 'application/json'
                     },
                     statusCode: registeredUser.statusCode || 201,
-                    data: registeredUser.data || registeredUser
+                    data: registeredUser.insertedId ? { message: "User registered successfully" } : registeredUser
                 };
             } catch (e) {
                 console.error("error from register controller: ", e)
                 logEvents(
-                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message || e.ReferenceError}`,
                     "controllerHandlerErr.log"
                 );
                 return makeHttpError({
@@ -63,7 +63,7 @@ module.exports = {
      * @throws {makeHttpError} If there is an error during the login process.
      */
     loginUserController: ({ loginUserUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError, makeHttpError, logEvents }) => {
+        InvalidPropertyError, makeHttpError, logEvents, bcrypt, jwt }) => {
         return async function loginUserControllerHandler(httpRequest) {
 
             const { email, password } = httpRequest.body;
@@ -76,7 +76,7 @@ module.exports = {
             }
 
             try {
-                const userCredentials = await loginUserUseCaseHandler({ email, password });
+                const userCredentials = await loginUserUseCaseHandler({ email, password, bcrypt, jwt });
 
                 const maxAge = {
                     accessToken: process.env.JWT_EXPIRES_IN,
@@ -93,7 +93,7 @@ module.exports = {
                         'Set-Cookie': cookies
                     },
                     statusCode: 201,
-                    data: JSON.stringify(userCredentials)
+                    data: userCredentials
                 };
             } catch (e) {
                 logEvents(
@@ -114,7 +114,7 @@ module.exports = {
     * @return {Promise<Object>} An object containing the headers, status code, and data of the refreshed access token in JSON format.
     */
     refreshTokenUserController: ({ refreshTokenUseCaseHandler, UniqueConstraintError,
-        InvalidPropertyError, makeHttpError, logEvents }) => async function refreshTokenUserControllerHandler(httpRequest) {
+        InvalidPropertyError, makeHttpError, logEvents, jwt }) => async function refreshTokenUserControllerHandler(httpRequest) {
 
             //Iam facing problem with cooki-parser
             const { body: { refreshToken } } = httpRequest;
@@ -126,7 +126,7 @@ module.exports = {
             }
             try {
 
-                const newAccessToken = await refreshTokenUseCaseHandler({ refreshToken });
+                const newAccessToken = await refreshTokenUseCaseHandler({ refreshToken, jwt });
                 console.log("from refresh token controller handler: ", newAccessToken);
 
                 const maxAge = {
@@ -413,16 +413,72 @@ module.exports = {
     ,
 
 
-    /**
-     * 
-     *  //validate mongodb id
-    function validateId(id) {
-        if (!ObjectId.isValid(id)) {
-            throw new InvalidPropertyError(
-                `Invalid ID`
-            )
+    // user controller for forgot password
+    forgotPasswordController: ({ forgotPasswordUseCaseHandler, UniqueConstraintError,
+        InvalidPropertyError, makeHttpError, logEvents, sendEmail }) => async function forgotPasswordControllerHandler(httpRequest) {
+
+            const { email } = httpRequest.body;
+            if (!email) {
+                return makeHttpError({
+                    statusCode: 400,
+                    errorMessage: 'No email provided'
+                });
+            }
+
+            forgotPasswordUseCaseHandler({ email }).then((forgotPasswordUserData) => {
+
+                if (forgotPasswordUserData) {
+                    //fire the email sending event
+                    const token = forgotPasswordUserData.token;
+                    const resetPasswordLink = `http://localhost:5000/users/auth/reset-password/${token}`
+                    sendEmail({ userEmail: email, resetPasswordLink });
+                    return {
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        statusCode: 204,
+                        data: `reset password link sent to your email ${email}`,
+                    };
+                }
+            }).catch((e) => {
+                logEvents(
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
+                    "controllerHandlerErr.log"
+                );
+                console.log("error from forgotPasswordController controller handler: ", e);
+                return makeHttpError({ errorMessage: e.message, statusCode: e.statusCode });
+            });
+
+
+        },
+
+    //reset password
+    resetPasswordController: ({ resetPasswordUseCaseHandler, UniqueConstraintError }) => {
+        return async function resetPasswordControllerHandler(httpRequest) {
+
+            const { token } = httpRequest.params;
+            const { password } = httpRequest.body;
+            if (!token || !password) {
+                return makeHttpError({
+                    statusCode: 400,
+                    errorMessage: 'No token or password provided'
+                });
+            }
+            try {
+                const resetPassword = await resetPasswordUseCaseHandler({ token, password });
+                return {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    statusCode: 201,
+                    data: resetPassword.id ? { message: "password reset successfully" } : { message: "resetPassword failed! hindly try again after some time" }
+                };
+            } catch (e) {
+                console.log("error from resetPasswordController controller handler: ", e);
+                const statusCode = e instanceof UniqueConstraintError ? 400 : 500;
+                return makeHttpError({ errorMessage: e.message, statusCode });
+            }
         }
-        return id;
     }
-     */
+
 }

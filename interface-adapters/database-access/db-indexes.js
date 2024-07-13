@@ -3,7 +3,7 @@ require('dotenv').config();
 
 // all the collections stated here are created if not exist.
 module.exports = async function setupDb() {
-  console.log('Setting up database...')
+  console.log('Setting up database indexes...')
   const db = await dbconnection();
 
   const allProductsIndexName = await db.collection("products").listIndexes().toArray();
