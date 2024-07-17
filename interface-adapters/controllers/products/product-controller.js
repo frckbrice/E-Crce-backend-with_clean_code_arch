@@ -27,7 +27,7 @@ const createProductController = ({ createProductUseCaseHandler, dbProductHandler
     //extract appropriate data for use case
     const productData = {
         title: body.title,
-        descripton: body.descripton,
+        description: body.description,
         price: body.price, //The current selling price of the product.
         category: body.category,
         /* example: images: ["image1.jpg", "image2.jpg"],*/

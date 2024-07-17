@@ -193,7 +193,7 @@ const rateProduct = async ({ logEvents, ...ratingModel }) => {
             const productCollection = client.db("digital-market-place-updates").collection("products");
             const ratingCollection = client.db("digital-market-place-updates").collection("ratings");
 
-            // check if the product has been rated before.
+            // check if the product exists
             const existingProduct = await productCollection.findOne({ _id: new ObjectId(ratingModel.productId) }, { session });
             if (!existingProduct) {// cannot rate ghost product.
                 session.abortTransaction();
@@ -249,7 +249,7 @@ const rateProduct = async ({ logEvents, ...ratingModel }) => {
                 },
                 { session }
             );
-            // await session.commitTransaction();
+            // await session.commitTransaction(); NO NEED TO EXPLICITELY DO IT, IT'S DONE BEHIND THE SCENE BY MONGODB DRIVER
             return { updatedProduct, newRating };
         }, transactionOptions);
 
@@ -264,22 +264,6 @@ const rateProduct = async ({ logEvents, ...ratingModel }) => {
         // End the session
         session.endSession();
         await client.close();
-    }
-}
-// find one rating for a product based on product id and user id
-const findOneRating = async ({ productId, userId }) => {
-
-    const db = await dbconnection();
-    try {
-        const result = await db.collection('ratings').findOne({ productId, userId });
-        return result;
-    } catch (error) {
-        console.log("Error from product DB handler: ", error);
-        logEvents(
-            `${error.no}:${error.code}\t${error.ReferenceError || error.TypeError}\t${error.message}`,
-            "product.log"
-        );
-        return null;
     }
 }
 

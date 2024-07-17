@@ -32,10 +32,10 @@ const createProductUseCase = ({ makeProductModelHandler }) => async function
 const findOneProductUseCase = ({ productValidation }) => async function
     findOneProductUseCaseHandler({ productId, logEvents, findOneProductDbHandler, errorHandlers }) {
     const { InvalidPropertyError } = errorHandlers;
-    const { validateUUID } = productValidation;
+    const { } = productValidation;
     try {
         // validate id
-        const uuid = validateUUID(productId, InvalidPropertyError);
+        const uuid = validateObjectId(productId, InvalidPropertyError);
         // store product in database mongodb
         const newProduct = await findOneProductDbHandler({ productId: uuid });
         return Object.freeze(newProduct)
@@ -73,10 +73,10 @@ const deleteProductUseCase = () => async function deleteProductUseCaseHandler({ 
 
     const { findOneProductDbHandler, deleteProductDbHandler } = dbProductHandler;
     const { InvalidPropertyError } = errorHandlers;
-    const { validateUUID } = productValidation;
+    const { validateObjectId } = productValidation;
     try {
         // validate id
-        const uuid = validateUUID(productId, InvalidPropertyError);
+        const uuid = validateObjectId(productId, InvalidPropertyError);
         // check first that the product exists
         const existingProduct = await findOneProductDbHandler({ productId: uuid });
         if (!existingProduct) {
@@ -105,10 +105,10 @@ const updateProductUseCase = ({ makeProductModelHandler }) => async function
 
     const { findOneProductDbHandler, updateProductDbHandler } = dbProductHandler;
     const { InvalidPropertyError } = errorHandlers;
-    const { validateUUID } = productValidation;
+    const { } = productValidation;
     try {
         // validate id
-        const uuid = validateUUID(productId, InvalidPropertyError);
+        const uuid = validateObjectId(productId, InvalidPropertyError);
         // check first that the product exists
         const existingProduct = await findOneProductDbHandler({ productId: uuid });
         if (!existingProduct) {

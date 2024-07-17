@@ -9,6 +9,7 @@ const userAndAuthRouter = require('./routes/auth-user.router.js');
 const { logger } = require('./interface-adapters/middlewares/loggers/logger.js');
 const productRouter = require('./routes/product.routes.js');
 const createIndexFn = require('./interface-adapters/database-access/db-indexes.js');
+const blogRouter = require('./routes/blog.router.js');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use(express.urlencoded({ extended: false }));
 
 app.use('/users', userAndAuthRouter);
 app.use('/products', productRouter);
+app.use('/blogs', blogRouter);
 
 app.use("/", (_, res) => {
     res.sendFile(path.join(__dirname, "public", "views", "index.html"));
