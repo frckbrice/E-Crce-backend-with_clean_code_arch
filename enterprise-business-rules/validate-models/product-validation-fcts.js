@@ -9,13 +9,13 @@ function validateTitle({ title, InvalidPropertyError }) {
 //validate title length
 
 //validate and normalise product description
-function validateDescription({ descripton, InvalidPropertyError }) {
-    if (descripton.length < 50) {
+function validateDescription({ description, InvalidPropertyError }) {
+    if (description.length < 50) {
         throw new InvalidPropertyError(
             `A product's title must be at least 20 characters long.`
         )
     }
-    return descripton.charAt(0).toUpperCase() + descripton.slice(1);
+    return description.charAt(0).toUpperCase() + description.slice(1);
 }
 
 /**
@@ -153,45 +153,20 @@ const CalculateTotalReviews = (totalRatings) => {
 }
 
 //calculate average rating
-const calculateAverageRating = (totalRatings) => {
+const calculateAverageRating = (totalRatings, resultingProductData) => {
     if (!totalRatings || !totalRatings.length) return 0
     return totalRatings.reduce((acc, curr, idx) => acc + curr * (idx + 1), 0) / resultingProductData.totalReviews;
 }
 
-// validate uuid  as ObjectId
-const validateUUID = (id, InvalidPropertyError) => {
-    // const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    // console.log(id);
-    const regex = /^[a-fA-F0-9]{24}$/; // ObjectId validation regex
-    if (!regex.test(id)) {
-        throw new InvalidPropertyError(`Invalid product ObjectId.`)
+// validate uuid as ObjectId
+const validateObjectId = (id, InvalidPropertyError) => {
+    if (!/^[0-9a-fA-F]{24}$/.test(id)) {
+        throw new InvalidPropertyError("Invalid product id.");
     }
     return id;
+
 }
 
-// validate rating model 
-const validateRatingModel = (ratingModel, InvalidPropertyError) => {
-    const { productId, userId, ratingValue } = ratingModel;
-
-    // validate IDs
-    const productUUID = validateUUID(productId, InvalidPropertyError);
-    const userUUID = validateUUID(userId, InvalidPropertyError);
-
-    // validate rating value
-    const validRatingValues = [1, 2, 3, 4, 5];
-    if (!ratingValue || !validRatingValues.includes(ratingValue)) {
-        throw new InvalidPropertyError(
-            `Invalid rating value.`
-        )
-    }
-
-    return {
-        productId: productUUID,
-        userId: userUUID,
-        ratingValue,
-        date: new Date().toISOString(),
-    };
-}
 
 //basic product validation 
 const basicProductValidation = ({ productData, errorHandlers }) => {
@@ -207,7 +182,7 @@ const basicProductValidation = ({ productData, errorHandlers }) => {
 
     if (!productData.descripton) {
         errors.push(`Product descripton is required`);
-    } else resultingProductData.descripton = validateDescription({ descripton: productData.descripton, InvalidPropertyError });
+    } else resultingProductData.description = validateDescription({ description: productData.description, InvalidPropertyError });
 
     if (!productData.price) {
         errors.push(`Product price is required`);
@@ -283,13 +258,13 @@ const basicProductValidation = ({ productData, errorHandlers }) => {
     resultingProductData.latestRating = null;
     resultingProductData.rateAverage = 0;
     resultingProductData.lastModified = new Date().toISOString();
-    resultingProductData.instock = Boolean(resultingProductData.inventory && resultingProductData.inventory > 0)
+    resultingProductData.instock = Boolean(resultingProductData.inventory)
     resultingProductData.brands = productData.brands || [];
 
     if (errors.length) {
         throw new RequiredParameterError(errors.join(', '));
     }
-    console.log("end of validations: ");
+    console.log("successfully validated product: ");
     return resultingProductData;
 }
 
@@ -298,7 +273,11 @@ module.exports = () => {
         basicProductValidation,
         CalculateTotalReviews,
         calculateAverageRating,
-        validateUUID,
-        validateRatingModel
+        validateObjectId,
+        validateTitle,
+        validateNumber,
+        validateCategory,
+        validateColors,
+        validateDescription
     })
 }

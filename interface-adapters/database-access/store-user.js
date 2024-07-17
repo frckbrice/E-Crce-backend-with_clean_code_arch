@@ -22,18 +22,10 @@ async function findUserByEmail(email, dbconnection) {
         if (!user) {
             return null;
         }
+        const id = user._id.toString();
+        delete user._id;
         delete user.password;
-        return user;
-        // {
-        //     id: user._id.toString(),
-        //     email: user.email,
-        //     firstName: user.firstName,
-        //     lastName: user.lastName,
-        //     mobile: user.mobile,
-        //     active: user.active,
-        //     roles: user.roles,
-        //     isBlocked: user.isBlocked
-        // };
+        return { id, ...user };
 
     } catch (error) {
         console.log("error checking for thexistence of user in DB", error);
@@ -62,16 +54,29 @@ async function findUserById(id, dbconnection) {
         if (!user) {
             return null;
         }
-        return {
-            id: user._id.toString(),
-            email: user.email,
-            firstName: user.firstName,
-            lastName: user.lastName,
-            mobile: user.mobile,
-            active: user.active,
-            roles: user.roles,
-            isBlocked: user.isBlocked
-        };
+        const id = user._id.toString();
+        delete user._id;
+        delete user.password;
+        return { id, ...user };
+    } catch (error) {
+        console.log("error checking for thexistence of user in DB", error);
+        return null;
+    }
+}
+
+// find user by token
+async function findUserByToken(token, dbconnection) {
+
+    const db = await dbconnection();
+    try {
+        const user = await db.collection('users').findOne({ passwordResetToken: token }, { projection: { _id: 1, email: 1, firstName: 1, lastName: 1 } });
+        if (!user) {
+            return null;
+        }
+        const id = user._id.toString();
+        delete user._id;
+        delete user.password;
+        return { id, ...user };
     } catch (error) {
         console.log("error checking for thexistence of user in DB", error);
         return null;
@@ -174,20 +179,16 @@ async function findAllUsers(dbconnection) {
 async function updateUser({ id, dbconnection, ...userData }) {
 
     const newID = new ObjectId(id);
+
     const db = await dbconnection()
     const user = await db
         .collection('users')
         .findOneAndUpdate({ _id: newID }, { $set: { ...userData } }, { projection: { _id: 1, email: 1, firstName: 1, lastName: 1, mobile: 1, roles: 1, active: 1 } });
 
-    return {
-        id: user._id.toString(),
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        mobile: user.mobile,
-        active: user.active,
-        roles: user.roles
-    };
+    const newid = user._id.toString();
+    delete user._id;
+    delete user.password;
+    return { id: newid, ...user };
 }
 
 /**
@@ -219,6 +220,7 @@ module.exports = function makeUserdb({ dbconnection }) {
         findAllUsers: async () => findAllUsers(dbconnection),
         findUserByEmail: async ({ email }) => findUserByEmail(email, dbconnection),
         findUserById: async ({ id }) => findUserById(id, dbconnection),
+        findUserByToken: async ({ token }) => findUserByToken(token, dbconnection),
         registerUser: async (userData) => registerUser(userData, dbconnection),
         findUserByEmailForLogin: async ({ email }) => findUserByEmailForLogin(email, dbconnection),
         updateUser: async ({ id, ...userData }) => updateUser({ id, dbconnection, ...userData }),

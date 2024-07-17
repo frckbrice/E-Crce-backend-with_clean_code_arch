@@ -142,8 +142,11 @@ function validateId(id) {
  * - mobile: The result of validating the mobile number.
  * - password: The result of validating the password.
  */
-async function validateUserData({ firstName, lastName, email, mobile, password, roles, active, address, whishlist }) {
+async function validateUserData(userData) {
     const errors = [];
+    const { firstName, lastName, email, mobile, password, roles, active, address, whishlist, passwordChangedAt,
+        passwordResetToken,
+        passwordResetExpires } = userData;
 
     if (!firstName && !lastName) errors.push('user must have a first name or last name.');
     if (!email) errors.push('user must have an email.');
@@ -167,7 +170,10 @@ async function validateUserData({ firstName, lastName, email, mobile, password, 
         whishlist: roles === "admin" ? [] : Array.isArray(whishlist) ? whishlist : whishlist ? [whishlist] : [],
         cart: [],
         isBlocked: false,
-        createdAt: { $currentDate: true }
+        createdAt: new Date().toISOString(),
+        passwordChangedAt,
+        passwordResetToken,
+        passwordResetExpires
     };
 }
 

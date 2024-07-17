@@ -1,10 +1,3 @@
-const { makeUser, validateId, validateUserDataUpdates } = require("../../../enterprise-business-rules/entities");
-const { UniqueConstraintError, InvalidPropertyError, RequiredParameterError } = require("../../../interface-adapters/validators-errors/errors");
-const { makeHttpError } = require("../../../interface-adapters/validators-errors/http-error");
-const jwt = require("jsonwebtoken");
-const bcrypt = require("bcrypt");
-const { logEvents } = require("../../../interface-adapters/middlewares/loggers/logger");
-
 
 module.exports = {
 
@@ -16,7 +9,7 @@ module.exports = {
    * @return {Promise<Object|Error>} Returns a promise that resolves to the registered user object or rejects with an error.
    * @throws {HttpError} Throws an HttpError if the user already exists or if there is an error during registration.
    */
-  registerUserUseCase: ({ dbUserHandler, entityModels }) => async function registerUserUseCaseHandler(userData) {
+  registerUserUseCase: ({ dbUserHandler, entityModels, logEvents, makeHttpError }) => async function registerUserUseCaseHandler(userData) {
 
     const { makeUser } = entityModels;
     try {
@@ -34,7 +27,7 @@ module.exports = {
       }
 
     } catch (error) {
-      console.log("error from register use case handler: ", err);
+      console.log("error from register use case handler: ", error);
       logEvents(
         `${error.no}:${error.code}\t${error.syscall}\t${error.hostname}`,
         "userHandlerErr.log"
@@ -57,11 +50,11 @@ module.exports = {
  * @throws {InvalidPropertyError} If the provided password does not match the stored password.
  * @return {Promise<Object>} An object containing the access token and an empty refresh token.
  */
-  loginUserUseCase: ({ dbUserHandler }) => {
+  loginUserUseCase: ({ dbUserHandler, logEvents, makeHttpError }) => {
 
     return async function loginUserUseCaseHandler(userData) {
 
-      const { email, password } = userData;
+      const { email, password, bcrypt, jwt } = userData;
 
       //basic verification
       if (!email || !password) {
@@ -133,7 +126,7 @@ module.exports = {
  * @return {Promise<{allUsers: Array}>} A promise that resolves to an object containing all users.
  * @throws {new Error} If no users are found in the database.
  */
-  findAllUsersUseCase: ({ dbUserHandler }) => {
+  findAllUsersUseCase: ({ dbUserHandler, logEvents }) => {
 
     return async function findAllUsersUseCaseHandler() {
       try {
@@ -158,7 +151,7 @@ module.exports = {
 * @return {Promise<{user: Object}>} A promise that resolves to an object containing the user.
 * @throws {new Error} If the user is not found.
 */
-  findOneUserUseCase: ({ dbUserHandler }) => {
+  findOneUserUseCase: ({ dbUserHandler, validateId, logEvents }) => {
     return async function findOneUserUseCaseHandler({ userId, email }) {
 
       const newId = validateId(userId);
@@ -198,7 +191,7 @@ module.exports = {
 * @throws {RequiredParameterError} If the ID is not provided.
 * @throws {new Error} If the user is not found.
 */
-  updateUserUseCase: ({ dbUserHandler }) => async function updateUserUseCaseHandler({ userId, ...userData }) {
+  updateUserUseCase: ({ dbUserHandler, makeUser, validateId, RequiredParameterError, logEvents, makeHttpError }) => async function updateUserUseCaseHandler({ userId, ...userData }) {
 
     const newId = validateId(userId);
     try {
@@ -245,7 +238,7 @@ module.exports = {
 * @throws {RequiredParameterError} If the ID is not provided.
 * @throws {new Error} If the user is not found.
 */
-  deleteUserUseCase: ({ dbUserHandler }) => {
+  deleteUserUseCase: ({ dbUserHandler, validateId, RequiredParameterError, logEvents }) => {
     return async function deleteUserUseCaseHandler({ userId }) {
 
       const newId = validateId(userId);
@@ -286,8 +279,8 @@ module.exports = {
 * @throws {new Error} If the user is not found.
 * @throws {Error} If there is an error refreshing the token.
 */
-  refreshTokenUseCase: ({ dbUserHandler }) => {
-    return async function refreshTokenUseCaseHandler({ refreshToken }) {
+  refreshTokenUseCase: ({ dbUserHandler, RequiredParameterError, logEvents }) => {
+    return async function refreshTokenUseCaseHandler({ refreshToken, jwt }) {
 
       try {
         console.log(`refreshToken: ${refreshToken}`);
@@ -330,7 +323,7 @@ module.exports = {
   * @param {string} refreshToken - The refresh token to be used for logout.
   * @return {Object} An object containing the access token and refresh token.
   */
-  logoutUseCase: () => {
+  logoutUseCase: ({ RequiredParameterError, logEvents }) => {
     return async function logoutUseCaseHandler({ refreshToken }) {
       try {
         if (!refreshToken) {
@@ -348,7 +341,7 @@ module.exports = {
   },
 
   //block user
-  blockUserUseCase: ({ dbUserHandler }) => {
+  blockUserUseCase: ({ dbUserHandler, validateId, RequiredParameterError, logEvents }) => {
     return async function blockUserUseCaseHandler({ userId }) {
 
       const newId = validateId(userId);
@@ -378,7 +371,7 @@ module.exports = {
   },
 
   //un-block user
-  unBlockUserUseCase: ({ dbUserHandler }) => {
+  unBlockUserUseCase: ({ dbUserHandler, validateId, RequiredParameterError, logEvents }) => {
     return async function unBlockUserUseCaseHandler({ userId }) {
 
       const newId = validateId(userId);
@@ -403,6 +396,94 @@ module.exports = {
           "userHandlerErr.log"
         );
         throw new Error("Error unblock user: " + error.stack);
+      }
+    }
+  },
+
+  // forgot password user handler
+  forgotPasswordUseCase: ({ dbUserHandler, logEvents }) => {
+    return async function forgotPasswordUseCaseHandler({ email }) {
+
+      try {
+        const user = await dbUserHandler.findUserByEmail({ email });
+        if (!user) {
+          throw new Error("user not found");
+        }
+        //genrate token and create an expiration link
+        const token = require("crypto").randomBytes(64).toString("hex");
+        const tokenExpiration = new Date(Date.now() + 10 * 60 * 1000); // 10 min from now
+
+        // update user in DB with the new token expiration time
+        const updatedUser = await dbUserHandler.updateUser({ id: user.id, passwordResetToken: token, passwordResetExpires: tokenExpiration });
+
+        if (!updatedUser) {
+          throw new Error("user not found");
+        }
+
+        //send back usr and the email will be fired at the controller level
+        return {
+          ...user,
+          token,
+          tokenExpiration
+        }
+
+      } catch (error) {
+        console.log("Error from forgot password use case handler: ", error);
+        logEvents(
+          `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+          "userHandlerErr.log"
+        );
+        throw new Error("Error forgot password: " + error.stack);
+      }
+    }
+  },
+
+
+  // reset password 
+  resetPasswordUseCase: ({ dbUserHandler, logEvents, makeHttpError }) => {
+    return async function resetPasswordUseCaseHandler({ token, password }) {
+
+      try {
+        const user = await dbUserHandler.findUserByToken({ token });
+        if (!user) {
+          return makeHttpError({
+            statusCode: 404,
+            errorMessage: "No user with this token"
+          })
+        }
+        // check if token has expired
+        if (new Date(user.passwordResetExpires).getTime() < Date.now()) {
+          return makeHttpError({
+            statusCode: 500,
+            errorMessage: "Your password reset token has expired"
+          })
+        }
+        // update user in DB with new password
+        const updatedUser = await dbUserHandler.updateUser({
+          id: user.id,
+          password,
+          passwordChangedAt: new Date().toISOString(),
+          passwordResetToken: null,
+          passwordResetExpires: null
+        });
+
+        if (!updatedUser) {
+          return makeHttpError({
+            statusCode: 500,
+            errorMessage: "Reset password failed"
+          })
+        }
+        return updatedUser;
+      } catch (error) {
+        console.log("Error from reset password use case handler: ", error);
+        logEvents(
+          `${error.no}:${error.code}\t${error.name}\t${error.message}`,
+          "userHandlerErr.log"
+        );
+        return makeHttpError({
+          statusCode: 500,
+          errorMessage: "Your password reset failed"
+        })
       }
     }
   }

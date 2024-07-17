@@ -13,8 +13,6 @@ module.exports = (controller) => function responseAdapterHandler(req, res) {
     }
   };
 
-  console.log("passed the request response handler check")
-
   controller(httpRequest)
     .then(httpResponse => {
       console.log("response adapter: ", httpResponse)
