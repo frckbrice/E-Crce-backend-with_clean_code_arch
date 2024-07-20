@@ -1,6 +1,8 @@
 
-//validate and normalise product title
-function validateTitle({ title, InvalidPropertyError }) {
+//validate product title
+function validateTitle({ title, InvalidPropertyError, sanitize }) {
+    console.log("hit  title validation: ", title)
+    title = sanitize(title);
     if (title.length < 2)
         throw new InvalidPropertyError(`A product's title must be at least 2 characters long.`);
     return title.charAt(0).toUpperCase() + title.slice(1).toLowerCase();
@@ -8,8 +10,9 @@ function validateTitle({ title, InvalidPropertyError }) {
 
 //validate title length
 
-//validate and normalise product description
-function validateDescription({ description, InvalidPropertyError }) {
+//validate  product description
+function validateDescription({ description, InvalidPropertyError, sanitize }) {
+    description = sanitize(description);
     if (description.length < 50) {
         throw new InvalidPropertyError(
             `A product's title must be at least 20 characters long.`
@@ -36,6 +39,7 @@ Removes any leading or trailing hyphens using the regular expression /^-+|-+$/g 
  * @returns 
  */
 function slugify(title) {
+
     return title
         .toLowerCase()
         .trim()
@@ -103,13 +107,6 @@ function validateBrands(brands, InvalidPropertyError) {
 }
 
 
-//validate and normalize product rating: rating is an array of refences to users in the users collection
-function validateRating(rating, InvalidPropertyError) {
-    const ratingObj = {};
-
-    return rating;
-}
-
 // validate image type for png jpg 
 const validateImageType = (image, InvalidPropertyError) => {
 
@@ -169,7 +166,7 @@ const validateObjectId = (id, InvalidPropertyError) => {
 
 
 //basic product validation 
-const basicProductValidation = ({ productData, errorHandlers }) => {
+const basicProductValidation = ({ productData, errorHandlers, sanitize }) => {
 
     console.log("start validations: ")
     const errors = [];
@@ -178,11 +175,11 @@ const basicProductValidation = ({ productData, errorHandlers }) => {
 
     if (!productData.title) {
         errors.push(`Product title is required`);
-    } else resultingProductData.title = validateTitle({ title: productData.title, InvalidPropertyError });
+    } else resultingProductData.title = validateTitle({ title: productData.title, InvalidPropertyError, sanitize });
 
     if (!productData.descripton) {
         errors.push(`Product descripton is required`);
-    } else resultingProductData.description = validateDescription({ description: productData.description, InvalidPropertyError });
+    } else resultingProductData.description = validateDescription({ description: productData.description, InvalidPropertyError, sanitize });
 
     if (!productData.price) {
         errors.push(`Product price is required`);
@@ -278,6 +275,7 @@ module.exports = () => {
         validateNumber,
         validateCategory,
         validateColors,
-        validateDescription
+        validateDescription,
+        slugify
     })
 }

@@ -57,22 +57,15 @@ function validatePhone(phone) {
     return phone;
 }
 
-/**
- * Normalizes user data by capitalizing the first letter of first and last names, and converting email to lowercase.
- *
- * @param {string} firstName - The first name of the user.
- * @param {string} lastName - The last name of the user.
- * @param {string} email - The email address of the user.
- * @param {...Object} otherInfo - Additional user information.
- * @return {Object} The normalized user data.
- */
-async function normalise({ firstName, lastName, email, ...otherInfo }) {
-    return {
-        ...otherInfo,
-        firstName: firstName.charAt(0).toUpperCase() + firstName.slice(1),
-        lastName: lastName.charAt(0).toUpperCase() + lastName.slice(1),
-        email: email ? email.toLowerCase() : ""
-    }
+// make this function reusable and dynamic
+function normalise(sanitize, firstName, lastName, email) {
+    const normalised = {};
+
+    if (firstName) normalised.firstName = sanitize(firstName[0].toUpperCase() + firstName.slice(1));
+    if (lastName) normalised.lastName = sanitize(lastName[0].toUpperCase() + lastName.slice(1));
+    if (email) normalised.email = email ? sanitize(email.toLowerCase()) : "";
+
+    return normalised;
 }
 
 
@@ -204,9 +197,9 @@ async function validateUserDataUpdates({ firstName, lastName, mobile, roles, act
     return updatedValues;
 }
 
-module.exports = {
+module.exports = Object.freeze({
     validateUserData,
     normalise,
     validateUserDataUpdates,
-    validateId
-};
+    validateId,
+});

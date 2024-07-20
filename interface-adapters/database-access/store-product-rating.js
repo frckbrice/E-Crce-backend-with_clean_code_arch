@@ -7,17 +7,46 @@ const MongoClient = require("mongodb").MongoClient;
 
 async function createProduct(productData, dbconnection, logEvents) {
 
-    console.log("from createProduct DB handler");
     const db = await dbconnection();
+    const retryCount = 0;
+
     try {
-        const newProduct = await db.collection('products').insertOne({ ...productData });
-        return newProduct
+        const updateResult = await db.collection('products').updateOne(
+            { slug: productData.slug }, // Filter for existing documents with matching slug
+            { $set: productData }, // Update document with provided data
+            { upsert: true } // Insert a new document if no match is found
+        );
+
+        if (updateResult.upsertedCount === 1) {
+            return {
+                message: "Product created successfully",
+                statusCode: 201
+            };
+        } else if (updateResult.modifiedCount === 1) {
+            logEvents("Product with that slug already exists, updated content");
+            return {
+                message: "Product with that slug already exists, content updated",
+                statusCode: 409
+            };
+        } else {
+            logEvents("Unexpected update result during product creation");
+            throw new Error("Unexpected update result");
+        }
     } catch (error) {
-        console.log("Error from product DB handler: ", error);
         logEvents(
             `${error.no}:${error.code}\t${error.ReferenceError || error.TypeError}\t${error.message}`,
-            "product.log"
+            "blogPost.log"
         );
+        if (shouldRetry(error) && retryCount < 3) { // Define retry logic and limit
+            logEvents({ "retry": "Retrying product creation due to error:" }, "blogPost.log");
+            const delay = calculateDelay(retryCount); // Implement exponential backoff
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            retryCount++;
+            return createBlogPostPost({ blogPostData, dbconnection, logEvents });
+
+        } else {
+            throw error; // Re-throw non-retryable errors
+        }
     }
 }
 
@@ -109,26 +138,26 @@ const findAllProducts = async ({ dbconnection, logEvents, ...filterOptions }) =>
     }
 };
 
-// update existing product
-const updateProduct = async ({ productId, productData, dbconnection, logEvents }) => {
+// // update existing product
+// const updateProduct = async ({ productId, productData, dbconnection, logEvents }) => {
 
-    const db = await dbconnection();
-    try {
-        const updatedProduct = await db.collection('products').findOneAndUpdate(
-            { _id: new ObjectId(productId) },
-            { $set: { ...productData } },
-            { returnOriginal: false, }
-        );
-        return updatedProduct.value;
-    } catch (error) {
-        console.log("Error from product DB handler: ", error);
-        logEvents(
-            `${error.no}:${error.code}\t${error.ReferenceError || error.TypeError}\t${error.message}`,
-            "product.log"
-        );
-        return null;
-    }
-}
+//     const db = await dbconnection();
+//     try {
+//         const updatedProduct = await db.collection('products').findOneAndUpdate(
+//             { _id: new ObjectId(productId) },
+//             { $set: { ...productData } },
+//             { returnOriginal: false, }
+//         );
+//         return updatedProduct.value;
+//     } catch (error) {
+//         console.log("Error from product DB handler: ", error);
+//         logEvents(
+//             `${error.no}:${error.code}\t${error.ReferenceError || error.TypeError}\t${error.message}`,
+//             "product.log"
+//         );
+//         return null;
+//     }
+// }
 
 // delete product from DB
 const deleteProduct = async ({ productId, dbconnection, logEvents }) => {
@@ -146,7 +175,7 @@ const deleteProduct = async ({ productId, dbconnection, logEvents }) => {
     }
 }
 
-// update product use case handler
+// // update product use case handler
 const updatedProduct = async ({ productId, dbconnection, logEvents, ...productData }) => {
 
     const db = await dbconnection();
@@ -157,7 +186,9 @@ const updatedProduct = async ({ productId, dbconnection, logEvents, ...productDa
             { returnOriginal: false, }
         );
 
-        return updatedProduct;
+        const id = productId
+        delete updatedProduct._id;
+        return { id, ...updatedProduct };
 
     } catch (error) {
         console.log("Error from product DB handler: ", error);

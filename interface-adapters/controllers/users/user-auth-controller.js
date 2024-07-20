@@ -84,7 +84,7 @@ module.exports = {
                 };
 
                 const cookies = Object.entries(maxAge).map(([name, age]) => {
-                    return `${name}=${userCredentials[name]}; HttpOnly; Path=/; Max-Age=${age}; SameSite=none; Secure`;
+                    return `${name}=${userCredentials[name]}; HttpOnly; Path=/; Max-Age=${age}; SameSite=lax; Secure`;
                 }).join('; ');
 
                 return {
@@ -133,11 +133,9 @@ module.exports = {
                     accessToken: process.env.JWT_REFRESH_EXPIRES_IN
                 };
 
-                // const newCookies = Object.entries(maxAge).reduce((acc, [name, age]) => {
-                //     acc[name] = `${name}=${refreshToken[name]}; HttpOnly; Path=/; Max-Age=${age}; SameSite=none; Secure`;
-                //     return acc;
-                // }, {});
-                const newCookies = Object.entries(maxAge).map(([name, age]) => `${name}=${newAccessToken}; HttpOnly; Path=/; Max-Age=${age}; SameSite=none; Secure`).join('; ');
+                // set security on cookie to prevent XSS, CSRF attacks
+                // const expires = new Date(Date.now() + age * 1000);
+                const newCookies = Object.entries(maxAge).map(([name, age]) => `${name}=${newAccessToken}; HttpOnly; Path=/; Max-Age=${age}; SameSite=lax; Secure`).join('; ');
 
                 // we may just return this token in the body and use it on the frontend other way.
                 return {
@@ -474,6 +472,10 @@ module.exports = {
                     data: resetPassword.id ? { message: "password reset successfully" } : { message: "resetPassword failed! hindly try again after some time" }
                 };
             } catch (e) {
+                logEvents(
+                    `${"No:", e.no}:${"code: ", e.code}\t${"name: ", e.name}\t${"message:", e.message}`,
+                    "controllerHandlerErr.log"
+                );
                 console.log("error from resetPasswordController controller handler: ", e);
                 const statusCode = e instanceof UniqueConstraintError ? 400 : 500;
                 return makeHttpError({ errorMessage: e.message, statusCode });

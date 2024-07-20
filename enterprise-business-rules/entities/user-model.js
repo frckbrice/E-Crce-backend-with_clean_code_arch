@@ -1,7 +1,7 @@
 
 module.exports = {
 
-    makeUserModel: ({ userValidationData, logEvents }) => {
+    makeUserModel: ({ userValidation, logEvents, sanitize }) => {
         return async function makeUser({ userData, update = false }) {
 
             console.log("hit user model: ");
@@ -9,7 +9,7 @@ module.exports = {
                 validateUserData,
                 normalise,
                 validateUserDataUpdates,
-            } = userValidationData;
+            } = userValidation;
             let normalisedUserData = {}, validatedUserData = null;
             try {
                 // for update user data we have to set "update = true" from the user handler
@@ -20,7 +20,7 @@ module.exports = {
                     validatedUserData = await validateUserData({ ...userData });
                     console.log("hit user model after validate user data for update false: ");
                 }
-                normalisedUserData = await normalise(validatedUserData);
+                normalisedUserData = await normalise(sanitize, ...validatedUserData);
                 return Object.freeze(normalisedUserData)
             } catch (error) {
                 console.log("Error from user-model handler: ", error);

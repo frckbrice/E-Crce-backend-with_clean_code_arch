@@ -1,3 +1,4 @@
+// database access
 const { dbProductHandler } = require("../../database-access")
 
 const {
@@ -5,15 +6,18 @@ const {
 } = require("./product-controller")();
 
 
+// controllers
 const productControllerHandlsers = require("./product-controller")();
-const productUseCaseHandlers = require("../../../application-business-rules/use-cases/products");
+const productUseCaseHandlers = require("../../../application-business-rules/use-cases/products-&-rating");
 const { makeHttpError } = require("../../validators-errors/http-error");
 
+
+//utilities 
 const errorHandlers = require("../../validators-errors/errors");
 const { logEvents } = require("../../middlewares/loggers/logger");
 
 
-
+// controller handlers
 const createProductControllerHandler = productControllerHandlsers.createProductController({ createProductUseCaseHandler: productUseCaseHandlers.createProductUseCaseHandler, dbProductHandler, errorHandlers, makeHttpError, logEvents });
 
 const updateProductControllerHandler = productControllerHandlsers.updateProductController({ dbProductHandler, updateProductUseCaseHandler: productUseCaseHandlers.updateProductUseCaseHandler, makeHttpError, logEvents, errorHandlers });
@@ -28,11 +32,11 @@ const findOneProductControllerHandler = productControllerHandlsers.findOneProduc
 const rateProductControllerHandler = productControllerHandlsers.rateProductController({ dbProductHandler, rateProductUseCaseHandler: productUseCaseHandlers.rateProductUseCaseHandler, makeHttpError, logEvents, errorHandlers });
 
 
-module.exports = {
+module.exports = Object.freeze({
     createProductControllerHandler,
     updateProductControllerHandler,
     deleteProductControllerHandler,
     findAllProductControllerHandler,
     findOneProductControllerHandler,
     rateProductControllerHandler
-}
+});

@@ -1,24 +1,42 @@
 
-// user and product validation
-const userValidationData = require("../validate-models/user-validation-functions");
-const productValidation = require("../validate-models/product-validation-fcts")();
-const { validateRatingModel } = require("../validate-models/rating-validation")();
-
 //log errors
 const { logEvents } = require("../../interface-adapters/middlewares/loggers/logger");
 
-// user and product models
+//models
 const { makeUserModel } = require("./user-model");
-const productModels = require("./product-model");
+const { makeProductModel } = require("./product-model");
 const { makeRatingProductModel } = require("./rating-model");
 
-const makeUser = makeUserModel({ userValidationData, logEvents });
-const makeProductModelHandler = productModels.makeProductModel({ productValidation });
-const makeProductRatingModelHandler = makeRatingProductModel({ validateRatingModel });
+// validations
+const entityModelsValidation = require("../../enterprise-business-rules/validate-models");
+
+//sanitize input texts
+const sanitizeHtml = require("sanitize-html");
+/**
+ * Sanitizes the given text by removing any potentially dangerous HTML tags and attributes.
+ *
+ * @param {string} text - The text to be sanitized.
+ * @return {string} The sanitized text.
+ */
+function sanitize(text) {
+    // TODO: allow more coding embeds
+    return sanitizeHtml(text, {
+        allowedIframeHostnames: ['*'] // TODO: limit to only whitelist domains
+    })
+}
+
+const makeUser = makeUserModel({ userValidation: entityModelsValidation.userValidation, logEvents, sanitize });
+
+const makeProductModelHandler = makeProductModel({ productValidation: entityModelsValidation.productValidation, sanitize });
+
+const makeProductRatingModelHandler = makeRatingProductModel({ ratingValidation: entityModelsValidation.ratingValidation, logEvents });
+
+const makeBlogPostModelHandler = require("./blog-model")({ blogValidation: entityModelsValidation.blogValidation, logEvents, sanitize });
 
 
 module.exports = {
     makeUser,
     makeProductModelHandler,
-    makeProductRatingModelHandler
+    makeProductRatingModelHandler,
+    makeBlogPostModelHandler
 };

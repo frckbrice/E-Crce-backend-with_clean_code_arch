@@ -47,6 +47,25 @@ module.exports = async function setupDb() {
     ])]
   });
 
+  // add index for blogPosts
+  const allBlogPostsIndexName = await db.collection("blogPosts").listIndexes().toArray();
+  allBlogPostsIndexName.forEach(element => {
+    if (element.name === 'blogPostsUniqueIndex') {
+      return;
+    }
+
+    indexArr = [...indexArr, db.collection('blogPosts').createIndexes([
+      {
+        key: { "title": "text", "content": "text", "category": "text", },
+        name: 'blogPostTextIndex',
+        default_language: 'english',
+        weights: { content: 10, title: 3 }
+      },
+      // { key: { slug: 1, }, unique: true, name: 'blogPostsUniqueIndex' }
+      { key: { slug: 1, }, name: 'blogPostsUniqueIndex' }
+    ])]
+  });
+
   await Promise.all([
     ...indexArr
   ]);
