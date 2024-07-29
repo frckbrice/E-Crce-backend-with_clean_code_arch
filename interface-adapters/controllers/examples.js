@@ -112,7 +112,7 @@ https://www.amazon.de/
  *    comments: [{ id: string, ref: "comments"}] // array of comments ids
  *    isLiked: boolean,
  *    isDisliked: boolean,
- *    likers: [{id: string, ref: "users"}],
+ *    likers: [{id: string}],
  *    id: string,
  *    numViews: number,
  *    created_at: string,

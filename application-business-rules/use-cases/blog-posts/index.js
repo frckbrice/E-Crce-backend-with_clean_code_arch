@@ -17,10 +17,13 @@ const updateBlogPostUseCaseHandler = blogPostsUseCases.updateBlogPostUseCase({ m
 
 const findAllBlogPostsUseCaseHandler = blogPostsUseCases.findAllBlogPostsUseCase({ makeHttpError });
 
+const updateBlogPostReactionUseCaseHandler = blogPostsUseCases.updateBlogPostReactionUseCase();
+
 module.exports = {
     createBlogPostUseCaseHandler,
     findOneBlogPostUseCaseHandler,
     deleteBlogPostUseCaseHandler,
     updateBlogPostUseCaseHandler,
-    findAllBlogPostsUseCaseHandler
+    findAllBlogPostsUseCaseHandler,
+    updateBlogPostReactionUseCaseHandler
 };  

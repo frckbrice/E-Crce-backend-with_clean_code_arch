@@ -16,7 +16,9 @@ const {
 // create blog post
 router
     .route('/')
-    .post(async (req, res) => requestResponseAdapter(blogcontrollerHandlers.createBlogPostControllerHandler)(req, res));
+    .post(authVerifyJwt,
+        isAdmin,
+        isBlocked, async (req, res) => requestResponseAdapter(blogcontrollerHandlers.createBlogPostControllerHandler)(req, res));
 
 
 //get all blog posts
@@ -32,12 +34,19 @@ router
 // update blog post
 router
     .route('/:blogId')
-    .put(async (req, res) => requestResponseAdapter(blogcontrollerHandlers.updateBlogPostControllerHandler)(req, res));
+    .put(authVerifyJwt,
+        isAdmin,
+        isBlocked, async (req, res) => requestResponseAdapter(blogcontrollerHandlers.updateBlogPostControllerHandler)(req, res));
 
 
 // delete blog post
 router
     .route('/:blogId')
     .delete(async (req, res) => requestResponseAdapter(blogcontrollerHandlers.deleteBlogPostControllerHandler)(req, res));
+
+// react on a blog post
+router
+    .route('/:blogId')
+    .patch(authVerifyJwt, async (req, res) => requestResponseAdapter(blogcontrollerHandlers.rateBlogPostControllerHandler)(req, res));
 
 module.exports = router;

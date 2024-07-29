@@ -124,7 +124,7 @@ const blogPostValidation = ({ blogPostData, errorHandlers, sanitize }) => {
         comments: [],
         numViews: 0,
         created_at: new Date().toISOString(),
-        lastModifiedDate: null
+        lastModified: null
     };
 
     if (!title || !content || !author || !tags || !image_urls || !cover_image || !category) {

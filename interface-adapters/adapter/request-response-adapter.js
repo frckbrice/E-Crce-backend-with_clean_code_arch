@@ -6,6 +6,8 @@ module.exports = (controller) => function responseAdapterHandler(req, res) {
     ip: req.ip,
     method: req.method,
     path: req.path,
+    user: req.user,
+    cookies: req.cookies,
     headers: {
       'Content-Type': req.get('Content-Type'),
       Referer: req.get('referer'),

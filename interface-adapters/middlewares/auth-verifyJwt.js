@@ -22,6 +22,7 @@ const authVerifyJwt = expressAsyncHandler((req, res, next) => {
       process.env.ACCESS_TOKEN_SECRETKEY,
       (err, decodedUserInfo) => {
         if (err) {
+          console.log("error from authVerifyJwt: ", err);
           return res.status(403).send("ACCESS_FORBIDDEN. TOKEN_EXPIRED");
         }
 

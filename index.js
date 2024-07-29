@@ -34,7 +34,12 @@ app.use('/users', userAndAuthRouter);
 app.use('/products', productRouter);
 app.use('/blogs', blogRouter);
 
-app.use("/", (_, res) => {
+app.use('/', (_, res) => {
+    res.sendFile(path.join(__dirname, "public"));
+});
+
+// access /index or /index.html or /
+app.use('^/$|/index(.html)?', (_, res) => {
     res.sendFile(path.join(__dirname, "public", "views", "index.html"));
 });
 

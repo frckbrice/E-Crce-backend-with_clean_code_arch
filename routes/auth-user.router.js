@@ -11,6 +11,7 @@ const {
 } = require("../interface-adapters/middlewares/auth-verifyJwt");
 
 
+// AUTHENTICATION - AUTHORISATION ROUTES
 router
     .route("/auth/register")
     .post(async (req, res) => makeResponseCallback(userControllerHandlers.registerUserControllerHandler)(req, res));
@@ -25,7 +26,8 @@ router
     .route("/auth/forgot-password")
     .post(async (req, res) => makeResponseCallback(userControllerHandlers.forgotPasswordControllerHandler)(req, res));
 
-router      // TODO: implement reset password simulated. update this with the correct route for reset password in line 32 below
+// TODO: implement reset password simulated. update this with the correct route for reset password in line 32 below
+router
     .route("/auth/reset-password/:token")
     .put(async (req, res) => makeResponseCallback(userControllerHandlers.resetPasswordControllerHandler)(req, res));
 
@@ -34,18 +36,20 @@ router
     .put(async (req, res) => makeResponseCallback(userControllerHandlers.resetPasswordControllerHandler)(req, res));
 
 router
+    .route("/auth/logout")
+    .post(authVerifyJwt, async (req, res) => makeResponseCallback(userControllerHandlers.logoutUserControllerHandler)(req, res));
+
+router
+    .route("/auth/refresh")
+    .get(authVerifyJwt, async (req, res) => makeResponseCallback(userControllerHandlers.refreshTokenUserControllerHandler)(req, res));
+
+
+// USER ROUTE. TODO: break this into 2 routes - one for auth and one for user
+
+router
     .route("/")
     .get(authVerifyJwt, isAdmin, async (req, res) => makeResponseCallback(userControllerHandlers.findAllUsersControllerHandler)(req, res));
 
-router
-    .route("/logout")
-    .post(async (req, res) => makeResponseCallback(userControllerHandlers.logoutUserControllerHandler)(req, res));
-
-router
-    .route("/refresh")
-    .get(async (req, res) => makeResponseCallback(userControllerHandlers.refreshTokenUserControllerHandler)(req, res));
-
-//authVerifyJwt, isAdmin,
 router
     .route("/:userId")
     .get(authVerifyJwt, isAdmin, isBlocked, async (req, res) => makeResponseCallback(userControllerHandlers.findOneUserControllerHandler)(req, res));
@@ -66,8 +70,6 @@ router
     .route("/unblock-user/:userId")
     .post(async (req, res) => makeResponseCallback(unBlockUserControllerHandler)(req, res));
 // authVerifyJwt, isAdmin to be added
-
-
 
 
 module.exports = router;

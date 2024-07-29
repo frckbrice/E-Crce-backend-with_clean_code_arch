@@ -97,21 +97,15 @@ async function findUserByEmailForLogin(email, dbconnection) {
 
     const db = await dbconnection()
     try {
-        const user = await db.collection('users').findOne({ email }, { projection: { _id: 1, email: 1, roles: 1, password: 1 } });
-        console.log(" checking for the xistence of user in DB", user);
+        const user = await db.collection('users').findOne({ email });
         if (!user) {
             return null;
         }
 
-        return {
-            id: user._id.toString(),
-            email: user.email,
-            roles: user.roles,
-            password: user.password
-        };
+        return user;
     } catch (error) {
         console.log("error checking for thexistence of user in DB", error);
-        throw new Error("Error finding user by email for login: ", error.stack);
+        return null;
     }
 }
 

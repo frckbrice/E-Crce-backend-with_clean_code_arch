@@ -141,6 +141,8 @@ async function validateUserData(userData) {
         passwordResetToken,
         passwordResetExpires } = userData;
 
+    console.log("hit user validation process")
+
     if (!firstName && !lastName) errors.push('user must have a first name or last name.');
     if (!email) errors.push('user must have an email.');
     if (!password) errors.push('user must have a password.');
@@ -150,6 +152,8 @@ async function validateUserData(userData) {
     if (errors.length) {
         throw new RequiredParameterError(errors.join(', '));
     }
+
+    console.log("end user validation process")
 
     return {
         email: validateEmail(email),

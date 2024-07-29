@@ -1,5 +1,5 @@
 // database access
-const { dbBlogPostHandler } = require("../../database-access");
+const { dbBlogPostHandler, dbUserHandler } = require("../../database-access");
 
 // controllers
 const blogPostControllerHandlers = require("./blog-controller")();
@@ -24,7 +24,7 @@ const findAllBlogPostControllerHandler = blogPostControllerHandlers.findAllblogP
 const findOneblogPostControllerHandler = blogPostControllerHandlers.findOneblogPostController({
     dbBlogPostHandler, findOneBlogPostUseCaseHandler: blogPostUseCaseHandlers.findOneBlogPostUseCaseHandler, logEvents, errorHandlers
 });
-// const rateBlogPostControllerHandler = blogPostControllerHandlers.rateBlogPostController({ dbBlogPostHandler, rateBlogPostUseCaseHandler: blogPostUseCaseHandlers.rateBlogPostUseCaseHandler, makeHttpError, logEvents, errorHandlers });
+const rateBlogPostControllerHandler = blogPostControllerHandlers.rateBlogPostController({ dbBlogPostHandler, rateBlogPostUseCaseHandler: blogPostUseCaseHandlers.updateBlogPostReactionUseCaseHandler, makeHttpError, logEvents, dbUserHandler });
 
 
 module.exports = Object.freeze({
@@ -33,5 +33,5 @@ module.exports = Object.freeze({
     deleteBlogPostControllerHandler,
     findAllBlogPostControllerHandler,
     findOneblogPostControllerHandler,
-    // rateBlogPostControllerHandler
+    rateBlogPostControllerHandler
 });

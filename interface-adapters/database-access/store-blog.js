@@ -1,7 +1,8 @@
 // create a blogPost post 
 
 const { ObjectId, DBRef } = require("mongodb");
-// const MongoClient = require("mongodb").MongoClient;
+const { options } = require("sanitize-html");
+const MongoClient = require("mongodb").MongoClient;
 
 // create blog post only if the blog with that title doesn't exist
 async function createBlogPostPost({ blogPostData, dbconnection, logEvents }) {
@@ -37,7 +38,7 @@ async function createBlogPostPost({ blogPostData, dbconnection, logEvents }) {
             "blogPost.log"
         );
         if (shouldRetry(error) && retryCount < 3) { // Define retry logic and limit
-            logEvents({ "retry": "Retrying blog post creation due to error:" }, "blogPost.log");
+            logEvents({ "retry": "Retrying blog post creation due to network error:" }, "blogPost.log");
             const delay = calculateDelay(retryCount); // Implement exponential backoff
             await new Promise((resolve) => setTimeout(resolve, delay));
             retryCount++;
@@ -63,65 +64,24 @@ function calculateDelay(retryCount) {
 
 
 // find one blogPost from DB
-const findOneBlogPost = async ({ blogPostId, dbconnection }) => {
-
-    const db = await dbconnection();
+const findOneBlogPost = async ({ blogPostId, dbconnection, logEvents }) => {
     try {
-        // const blogPost = await db.collection('blogPosts').findOne({ _id: new ObjectId(blogPostId) }, {
-        //     projection: { _id: 1, title: 1, content: 1, category: 1, numViews: 1, tags: 1, author: 1, slug: 1, cover_image: 1, created_at: 1, lastModified: 1 }
-        // });
-        // if (!blogPost) {
-        //     console.log("No blogPost found");
-        //     return null;
-        // }
-
-        const pipeline = [
+        const db = await dbconnection();
+        const blogPost = await db.collection('blogPosts').findOne(
+            { _id: new ObjectId(blogPostId) },
             {
-                $match: { _id: new ObjectId(blogPostId) }, // Match blog post by ID
-            },
-            {
-                $lookup: {
-                    from: "comments", // Specify comments collection
-                    localField: "_id", // Reference local field (blog post ID)
-                    foreignField: "blogPostId", // Reference foreign field in comments (postId)
-                    as: "comments", // Name for the joined comments array
-                },
-            },
-            {
-                $lookup: {
-                    from: "users", // Specify users collection
-                    localField: "likers", // Reference array of user IDs in blog post (optional)
-                    foreignField: "_id", // Reference user ID field in users collection
-                    as: "likes", // Name for the joined users array
-                },
-            },
-            {
-                $project: {
-                    // Specify desired fields from blog post
-                    title: 1,
-                    content: 1,
-                    // ... other blog post fields
-                    comments: 1,
-                    likes: { // Project only desired user fields from likes array
-                        _id: 0,
-                        username: 1,
-                        // ... other user fields
-                    },
-                },
-            },
-        ];
-
-        const blogPost = await db.collection('blogPosts').aggregate(pipeline).toArray();
-
-        return blogPost[0] || null;
-        // const { _id, ...rest } = blogPost;
-        // const id = _id.toString()
-        // const isDeleted = delete blogPost._id;
-
-        if (isDeleted) {
-            return { id, ...rest };
-        }
-        // return rest;
+                projection: {
+                    _id: 1, title: 1, content: 1, category: 1, numViews: 1, tags: 1, author: 1, slug: 1, cover_image: 1, created_at: 1, lastModified: 1,
+                    comments: 1, likes: { username: 1 }
+                }
+            }
+        );
+        const id = blogPost._id.toString()
+        delete blogPost._id;
+        return {
+            id,
+            ...blogPost
+        } ?? null;
     } catch (error) {
         console.log("Error from blogPost DB handler: ", error);
         logEvents(
@@ -135,14 +95,16 @@ const findOneBlogPost = async ({ blogPostId, dbconnection }) => {
 
 
 // find all blogPosts from the database using aggregate pipeline and tags
-const findAllBlogPosts = async ({ dbconnection, logEvents, ...filterOptions }) => {
+const findAllBlogPosts = async ({ dbconnection, logEvents, ...options }) => {
     const proj = { _id: 1, title: 1, content: 1, category: 1, numViews: 1, tags: 1, author: 1, slug: 1, cover_image: 1, created_at: 1, lastModified: 1 };
 
-    /** TODO: initiate the data transfer from frontend */
-    const { category, page = 1, perPage = 10, searchTerm, projection = proj } = filterOptions;
+    const { filterOptions } = options;
 
-    const skip = (page - 1) * perPage;
-    const limit = perPage;
+    /** TODO: initiate the data transfer from frontend */
+    const { category, page = 1, perPage = 10, searchTerm, projection = proj } = { ...filterOptions };
+
+    const skip = (Number(page) - 1) * Number(perPage);
+    const limit = +perPage;
 
     const pipeline = [
         { $match: { ...(searchTerm && { $text: { $search: searchTerm } }), ...(category && { category }) } },
@@ -151,11 +113,6 @@ const findAllBlogPosts = async ({ dbconnection, logEvents, ...filterOptions }) =
         { $sort: { created_at: -1 } },
         { $limit: limit }
     ];
-    // const pipeline = [
-    //     { $match: { ...(searchTerm && { $text: { $search: searchTerm } }), ...(category && { category }) } },
-    //     { $project: projection }, // Use projection to specify desired fields
-    //     { $sort: { created_at: -1 } },
-    // ];
 
     const db = await dbconnection();
 
@@ -166,12 +123,6 @@ const findAllBlogPosts = async ({ dbconnection, logEvents, ...filterOptions }) =
             db.collection('blogPosts').countDocuments({ ...(searchTerm && { $text: { $search: searchTerm } }), ...(category && { category }) })
         ]);
 
-        // const cursor = db.collection('blogPosts').aggregate(pipeline).sort({ created_at: -1 }).skip(skip).limit(limit);
-        // const blogPosts = await cursor.toArray();
-
-        // const totalBlogPosts = await db.collection('blogPosts').countDocuments({ ...(searchTerm && { $text: { $search: searchTerm } }), ...(category && { category }) });
-
-
         const totalPages = Math.ceil(totalBlogPosts / perPage);
 
         return {
@@ -179,17 +130,17 @@ const findAllBlogPosts = async ({ dbconnection, logEvents, ...filterOptions }) =
                 const id = blogPost._id.toString()
                 delete blogPost._id;
                 return {
-                    ...blogPost,
-                    id
+                    id,
+                    ...blogPost
                 }
             }),
             totalBlogPosts,
             totalPages,
             page,
-            perPage
+            perPage: +perPage
         };
     } catch (error) {
-        console.log("Error from blogPost DB handler: ", error);
+        console.log("Error from find all blog post DB handler: ", error);
         logEvents(`${error.no}:${error.code}\t${error.ReferenceError || error.TypeError}\t${error.message}`, "blogPost.log");
         return [];
     }
@@ -210,7 +161,7 @@ const updateBlogPost = async ({ blogPostId, blogPostData, dbconnection, logEvent
         delete blogPostData._id;
         return updatedBlogPost.modifiedCount > 0 ? { id: blogPostId, ...blogPostData, } : null;
     } catch (error) {
-        console.log("Error from blogPost DB handler: ", error);
+        console.log("Error from updateBlogPost DB handler: ", error);
         logEvents(
             `${error.no}:${error.code}\t${error.ReferenceError || error.TypeError}\t${error.message}`,
             "blogPost.log"
@@ -226,7 +177,7 @@ const deleteBlogPost = async ({ blogPostId, dbconnection, logEvents }) => {
         const result = await db.collection('blogPosts').deleteOne({ _id: blogPostId });
         return result.deletedCount > 0 ? { id: blogPostId } : null;
     } catch (error) {
-        console.log("Error from blogPost DB handler: ", error);
+        console.log("Error from deleteBlogPost DB handler: ", error);
         logEvents(
             `${error.no}:${error.code}\t${error.ReferenceError || error.TypeError}\t${error.message}`,
             "blogPost.log"
@@ -235,27 +186,143 @@ const deleteBlogPost = async ({ blogPostId, dbconnection, logEvents }) => {
     }
 };
 
-//TODO: create a transaction to like and dislike a blog post, 
-const updateBlogPostLikeDbHandler = async ({ blogPostId, dbconnection, logEvents }) => {
+const updateBlogPostLikeDbHandler = async ({ blogPostId, currentUserId, logEvents, data }) => {
 
-    const db = await dbconnection();
+    const client = new MongoClient(process.env.DB_URI);
+    const session = client.startSession();
+
+    /* start a transaction session */
+    const transactionOptions = {
+        readPreference: 'primary',
+        readConcern: { level: 'local' },
+        writeConcern: { w: 'majority' }
+    };
+    console.log("hit rate DB Handler ", data)
+    const lastModified = Date.now();
+    /* set up filter */
+    const filter = { _id: new ObjectId(blogPostId) };
     try {
-        const updatedBlogPost = await db.collection('blogPosts').updateOne(
-            { _id: new ObjectId(blogPostId) },
-            { $inc: { numViews: 1 } },
-            { returnOriginal: false }
-        );
-        return updatedBlogPost.modifiedCount > 0 ? { id: blogPostId } : null;
+        return await session.withTransaction(async () => {
+
+            /* initialize db collections. clientSession and client MUST be in the same session */
+            const blogPostCollection = client.db("digital-market-place-updates").collection("blogPosts");
+            console.log("hit DB H. after collections init ",)
+            // check if the blogPost exists
+            const existingBlogPost = await blogPostCollection.findOne(filter, { session });
+            console.log("hit DB H. after check exists ", existingBlogPost)
+            if (!existingBlogPost) {// cannot rate ghost blogPost.
+                console.error("no existing blog post. abort transaction");
+                session.abortTransaction();
+                return {
+                    error: {
+                        code: 404,
+                        message: "blogPost not found! transaction aborted.",
+                    }
+                };
+            }
+            //** check if this user has already rated this blogPost */
+
+            const hasAlreadyReact = existingBlogPost?.likers.length && existingBlogPost.likers?.find((liker) => {
+                return liker.id.toString() === currentUserId
+            })
+            console.log("hit DB H. after check hasAlreadyReact ", hasAlreadyReact)
+            /* check if this user has already like this blogPost */
+            const isLiked = existingBlogPost.isLiked;
+            const isDisliked = existingBlogPost.isDisliked;
+            let updatedBlogPost;
+            if (hasAlreadyReact) {
+
+                /**if he like already liked post, return */
+                if ((isLiked && data.isLiked) || (isDisliked && data.isDisliked)) {
+                    console.log("hit DB H.check if this user has already liked before return ", hasAlreadyReact)
+                    return {
+                        message: "this user has already liked this post"
+                    };
+                }
+                console.log("hit DB H.check start new check")
+                // has already react, it was dislike and current is like
+                if (isDisliked && data.isLiked) {
+                    //no need to push liker again
+                    console.log("hit DB H has already react positive before")
+                    updatedBlogPost = await blogPostCollection.findOneAndUpdate(
+                        filter,
+                        {
+                            // $push: {   
+                            //     id: currentUserId,
+                            // },
+                            $inc: {
+                                numViews: 1,
+                            },
+                            $set: {
+                                lastModified,
+                                isLiked: true,
+                                isDisliked: false,
+                            }
+                        },
+                        { session }
+                    );
+                } else
+
+                    // has already react, it was a like and current is dislike
+                    if (isLiked && data.isDisLiked) {
+                        console.log("hit DB H has already react negative before")
+                        // remove the user id from liste of likers ids
+                        updatedBlogPost = await blogPostCollection.findOneAndUpdate(
+                            filter,
+                            {
+                                $pull: {
+                                    id: currentUserId,
+                                },
+                                $inc: {
+                                    numViews: 1,
+                                },
+                                $set: {
+                                    lastModified,
+                                    isLiked: false,
+                                    isDisliked: true,
+                                }
+                            },
+                            { session }
+                        );
+                    }
+
+            } else {
+                updatedBlogPost = await blogPostCollection.findOneAndUpdate(
+                    filter,
+                    {
+                        $push: {
+                            id: currentUserId,
+                        },
+                        $inc: {
+                            numViews: 1,
+                        },
+                        $set: {
+                            lastModified,
+                            isLiked: data.isLiked ?? false,
+                            isDisliked: data.isDisliked ?? false,
+                        }
+                    },
+                    { session }
+                );
+            }
+            console.log("hit DB H. end checking process")
+            // await session.commitTransaction(); NO NEED TO EXPLICITELY DO IT, IT'S DONE BEHIND THE SCENE BY MONGODB DRIVER
+            return { updatedBlogPost };
+        }, transactionOptions);
+
     } catch (error) {
-        console.log("Error from blogPost DB handler: ", error);
+        console.log("Error from updateBlogPostLikeDbHandler DB handler: ", error);
         logEvents(
             `${error.no}:${error.code}\t${error.ReferenceError || error.TypeError}\t${error.message}`,
             "blogPost.log"
         );
-        return null;
+        throw new Error(error.message || error.ReferenceError || error.TypeError);
+    } finally {
+        // End the session
+        session.endSession();
+        await client.close();
     }
 }
-
 
 
 module.exports = ({ dbconnection, logEvents }) => {
@@ -263,8 +330,9 @@ module.exports = ({ dbconnection, logEvents }) => {
     return Object.freeze({
         createBlogPostDbHandler: async ({ blogPostData }) => createBlogPostPost({ blogPostData, dbconnection, logEvents }),
         findOneBlogPostDbHandler: async ({ blogPostId }) => findOneBlogPost({ blogPostId, dbconnection, logEvents }),
-        findAllBlogPostsDbHandler: async (filterOptions) => findAllBlogPosts({ dbconnection, logEvents, ...filterOptions }),
+        findAllBlogPostsDbHandler: async (options) => findAllBlogPosts({ dbconnection, logEvents, ...options }),
         updateBlogPostDbHandler: async ({ blogPostId, blogPostData }) => updateBlogPost({ blogPostId, blogPostData, dbconnection, logEvents }),
         deleteBlogPostDbHandler: async ({ blogPostId }) => deleteBlogPost({ blogPostId, dbconnection, logEvents }),
+        likeBlogPostDbHandler: async (blogPostId, currentUserId, data) => updateBlogPostLikeDbHandler({ blogPostId, logEvents, currentUserId, data })
     })
 }

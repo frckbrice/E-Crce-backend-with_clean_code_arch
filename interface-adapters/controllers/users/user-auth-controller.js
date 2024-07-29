@@ -79,21 +79,32 @@ module.exports = {
                 const userCredentials = await loginUserUseCaseHandler({ email, password, bcrypt, jwt });
 
                 const maxAge = {
-                    accessToken: process.env.JWT_EXPIRES_IN,
+                    accessTokenTime: process.env.JWT_EXPIRES_IN,
                     refreshToken: process.env.JWT_REFRESH_EXPIRES_IN
                 };
 
-                const cookies = Object.entries(maxAge).map(([name, age]) => {
-                    return `${name}=${userCredentials[name]}; HttpOnly; Path=/; Max-Age=${age}; SameSite=lax; Secure`;
-                }).join('; ');
+                /** No NEED TO SET ACCESS TOKEN IN COOKIES */
+
+                // const cookies = Object.entries(maxAge).map(([name, age]) => {
+                //     return `${name}=${userCredentials[name]}; HttpOnly; Path=/; Max-Age=${age}; SameSite=lax; Secure`;
+                // }).join('; ');
+
+                /**
+                 *  SET ONLY REFRESH TOKEN IN COOKIES
+                 * we are using sameSite=lax to prevent CSRF from cross-site requests
+                 *  we could have used sameSite=none to allow cross-site requests
+                 * */
+                const cookie =
+                    `refreshToken=${userCredentials["refreshToken"]}; HttpOnly; Path=/; Max-Age=${maxAge.accessTokenTime}; SameSite=lax; Secure`;
+                ;
 
                 return {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Set-Cookie': cookies
+                        'Set-Cookie': cookie
                     },
-                    statusCode: 201,
-                    data: userCredentials
+                    statusCode: userCredentials.accessToken ? 201 : 401,
+                    data: { accessToken: userCredentials.accessToken }
                 };
             } catch (e) {
                 logEvents(
@@ -116,12 +127,20 @@ module.exports = {
     refreshTokenUserController: ({ refreshTokenUseCaseHandler, UniqueConstraintError,
         InvalidPropertyError, makeHttpError, logEvents, jwt }) => async function refreshTokenUserControllerHandler(httpRequest) {
 
-            //Iam facing problem with cooki-parser
-            const { body: { refreshToken } } = httpRequest;
+            /* 
+                we need to get the refresh token from the cookies in request in order to refresh the access token
+            */
+            const cookies = httpRequest.cookies;
+            const refreshToken = cookies.refreshToken;
+
+            /*
+                 Iam facing problem with cooki-parser from the cookie-session package 
+            */
+            // const { body: { refreshToken } } = httpRequest;
             if (!refreshToken) {
                 return makeHttpError({
-                    statusCode: 400,
-                    errorMessage: 'Bad request. No refreshToken.'
+                    statusCode: 401,
+                    errorMessage: 'No refresh token provided.  UNAUTHORIZED!'
                 });
             }
             try {
@@ -129,22 +148,16 @@ module.exports = {
                 const newAccessToken = await refreshTokenUseCaseHandler({ refreshToken, jwt });
                 console.log("from refresh token controller handler: ", newAccessToken);
 
-                const maxAge = {
-                    accessToken: process.env.JWT_REFRESH_EXPIRES_IN
-                };
-
-                // set security on cookie to prevent XSS, CSRF attacks
-                // const expires = new Date(Date.now() + age * 1000);
-                const newCookies = Object.entries(maxAge).map(([name, age]) => `${name}=${newAccessToken}; HttpOnly; Path=/; Max-Age=${age}; SameSite=lax; Secure`).join('; ');
-
-                // we may just return this token in the body and use it on the frontend other way.
+                /**
+                 * the token should never be stored in local storage in frontend so it should not be access via JS by hacker. instead we should store it state.
+                 */
                 return {
                     headers: {
                         'Content-Type': 'application/json',
-                        'Set-Cookie': newCookies
+                        // 'Set-Cookie': newCookies
                     },
-                    statusCode: 201,
-                    data: JSON.stringify(newAccessToken)
+                    statusCode: newAccessToken ? 201 : 401,
+                    data: { accessToken: newAccessToken }
                 };
             } catch (e) {
                 logEvents(
@@ -173,17 +186,24 @@ module.exports = {
         InvalidPropertyError, makeHttpError, logEvents }) => {
         return async function logoutUserControllerHandler(httpRequest) {
 
-            const { refreshToken } = httpRequest.body;
+            /* 
+              we need to get the refresh token from the cookies in request in order to refresh the access token
+          */
+            const cookies = httpRequest.cookies;
+            const refreshToken = cookies.refreshToken;
+
+            /* I used body here instead of cookies because of the pb with cookie-session package that did not work here. */
+            // const { refreshToken } = httpRequest.body;
             if (!refreshToken) {
                 return makeHttpError({
-                    statusCode: 400,
-                    errorMessage: 'Bad request. No refreshToken.'
+                    statusCode: 204,
+                    errorMessage: ' No refreshToken.'
                 });
             }
 
             try {
 
-                const cookies = 'accessToken=; HttpOnly; Path=/; Max-Age=0; SameSite=none; Secure,' +
+                const cookies = ' HttpOnly; Path=/; Max-Age=0; SameSite=none; Secure,' +
                     'refreshToken=; HttpOnly; Path=/; Max-Age=0; SameSite=none; Secure';
                 if (!refreshToken) {
                     return {
@@ -204,8 +224,8 @@ module.exports = {
                         'Content-Type': 'application/json',
                         'Set-Cookie': cookies
                     },
-                    statusCode: 201,
-                    data: JSON.stringify({ measage: 'Successfully logged out' })
+                    statusCode: 200,
+                    data: JSON.stringify({ message: 'Successfully logged out' })
                 };
             } catch (e) {
                 logEvents(

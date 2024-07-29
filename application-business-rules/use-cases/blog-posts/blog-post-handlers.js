@@ -105,20 +105,23 @@ const deleteBlogPostUseCase = ({ makeHttpError }) => async function
 
 // get a single blog post
 const findOneBlogPostUseCase = ({ makeHttpError }) => async function findOneBlogPostUseCaseHandler({ blogPostId, logEvents, findOneBlogPostDbHandler }) {
+    try {
+        const existingBlogPost = await findOneBlogPostDbHandler({ blogPostId });
+        if (existingBlogPost) {
+            return {
+                blogPost: existingBlogPost,
+                statusCode: 200
+            };
+        }
+        throw new Error("Blog post not found!");
+    } catch (error) {
+        console.error("Error from find one blog post handler: ", error);
+        logEvents(
+            `${error.no}:${error.code}\t${error.name || error.TypeError || error.ReferenceError}\t${error.message}`,
+            "blogHandler.log"
+        );
+    }
 
-
-    const existingBlogPost = await findOneBlogPostDbHandler({ blogPostId }).catch(error => {
-        logEvents(`${error.no}:${error.code}\t${error.name || error.TypeError || error.ReferenceError}\t${error.message}`, "blogHandler.log");
-        throw new Error(error.message);
-    });
-    console.log("hiit the findone use case handlers: ", existingBlogPost)
-    return existingBlogPost ? Object.freeze({
-        blogPost: existingBlogPost,
-        statusCode: 200
-    }) : makeHttpError({
-        statusCode: 404,
-        message: "Blog post not found!"
-    });
 }
 
 // find all blog posts
@@ -145,10 +148,75 @@ const findAllBlogPostsUseCase = ({ makeHttpError }) => async function
     }
 }
 
+// update a blog post with reaction: like or dislike
+const updateBlogPostReactionUseCase = () => async ({
+    blogPostId,
+    email,
+    dbBlogPostHandler,
+    logEvents,
+    makeHttpError
+    , dbUserHandler,
+    data
+}) => {
+
+    const {
+        likeBlogPostDbHandler,
+        findOneBlogPostDbHandler
+    } = dbBlogPostHandler;
+
+    // get the DB user handler
+
+
+    try {
+        //check the existance of this user in DB
+        let user = await dbUserHandler.findUserByEmailForLogin({ email });
+
+        if (!user) {
+            return makeHttpError({
+                errorMessage: "USER NOT FOUND! LOGGIN FIRST",
+                statusCode: 401
+            });
+        }
+
+        // check if blog post exist
+        const existingBlogPost = await findOneBlogPostDbHandler({ blogPostId });
+        if (!existingBlogPost) {
+            return makeHttpError({
+                statusCode: 400,
+                errorMessage: "Blog post not found!",
+            });
+        }
+
+        const { updatedBlogPost } = await likeBlogPostDbHandler(blogPostId, user.id, data);
+        console.log("updatedBlogPost from use case handler: ", updatedBlogPost);
+        if (updatedBlogPost)
+            return Object.freeze({
+                updatedBlogPost,
+                statusCode: 201
+            });
+        return {
+            statusCode: 500,
+            updatedBlogPost: "Failed to update blog post"
+        }
+
+    } catch (error) {
+        console.log("Error from rate blog posts handler: ", error);
+        logEvents(
+            `${error.no}:${error.code}\t${error.name || error.TypeError || error.ReferenceError}\t${error.message}`,
+            "blogHandler.log"
+        );
+        return makeHttpError({
+            statusCode: 500,
+            errorMessage: "Failed to update the blog posts"
+        });
+    }
+
+}
 module.exports = Object.freeze({
     createBlogPostUseCase,
     updateBlogPostUseCase,
     deleteBlogPostUseCase,
     findOneBlogPostUseCase,
-    findAllBlogPostsUseCase
+    findAllBlogPostsUseCase,
+    updateBlogPostReactionUseCase
 })

@@ -13,8 +13,8 @@ module.exports = {
 
     const { makeUser } = entityModels;
     try {
-      const validatedUser = await makeUser({ userData });
-      const { email } = validatedUser;
+      const { normalisedUserData } = await makeUser({ userData });
+      const { email } = normalisedUserData;
       const existingUser = await dbUserHandler.findUserByEmail({ email });
 
       if (existingUser) {
@@ -23,7 +23,7 @@ module.exports = {
           statusCode: 409
         });
       } else {
-        return await dbUserHandler.registerUser(validatedUser);
+        return await dbUserHandler.registerUser(normalisedUserData);
       }
 
     } catch (error) {
@@ -52,23 +52,15 @@ module.exports = {
  */
   loginUserUseCase: ({ dbUserHandler, logEvents, makeHttpError }) => {
 
-    return async function loginUserUseCaseHandler(userData) {
+    return async function loginUserUseCaseHandler({ email, password, bcrypt, jwt }) {
 
-      const { email, password, bcrypt, jwt } = userData;
-
-      //basic verification
-      if (!email || !password) {
-        return makeHttpError({
-          errorMessage: "Missing email or password",
-          statusCode: 400
-        });
-      }
+      // console.log("hit login use case")
 
       try {
         //check the existance of this user in DB
         let existingUser = await dbUserHandler.findUserByEmailForLogin({ email });
 
-        if (!existingUser?.id) {
+        if (!existingUser) {
           return makeHttpError({
             errorMessage: "USER NOT FOUND! LOGGIN FIRST",
             statusCode: 401
@@ -77,6 +69,7 @@ module.exports = {
 
         //check the password
         const matchPasswd = await bcrypt.compare(password, existingUser.password);
+
         if (!matchPasswd) {
           return makeHttpError({
             errorMessage: "Bad credentials! UNAUTHORIZED",
@@ -84,14 +77,16 @@ module.exports = {
           });
         }
 
+
         //create the JWT
         const accessToken = jwt.sign({
           id: existingUser?.id,
           email,
           roles: existingUser?.roles
-        }, process.env.ACCESS_TOKEN_SECRETKEY, {
-          expiresIn: process.env.JWT_EXPIRES_IN
-        });
+        },
+          process.env.ACCESS_TOKEN_SECRETKEY,
+          { expiresIn: process.env.JWT_EXPIRES_IN }
+        );
 
         //create refresh token 
         const refreshToken = jwt.sign({ email }, process.env.JWT_REFRESH_SECRET, {
@@ -157,7 +152,7 @@ module.exports = {
       const newId = validateId(userId);
       const validEmail = validateUserDataUpdates({ email });
       try {
-        if (email) { // email defined
+        if (validEmail) { // email defined
           const user = await dbUserHandler.findUserByEmail({ email: validEmail });
 
           if (!user) {

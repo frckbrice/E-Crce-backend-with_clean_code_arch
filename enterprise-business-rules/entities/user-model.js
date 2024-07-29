@@ -20,8 +20,13 @@ module.exports = {
                     validatedUserData = await validateUserData({ ...userData });
                     console.log("hit user model after validate user data for update false: ");
                 }
-                normalisedUserData = await normalise(sanitize, ...validatedUserData);
-                return Object.freeze(normalisedUserData)
+
+                /* normalize text props */
+                const { firstName, lastName, email } = validatedUserData;
+                normalisedUserData = await normalise(sanitize, firstName, lastName, email);
+                return Object.freeze({
+                    normalisedUserData: { ...normalisedUserData, ...validatedUserData },
+                })
             } catch (error) {
                 console.log("Error from user-model handler: ", error);
                 logEvents(

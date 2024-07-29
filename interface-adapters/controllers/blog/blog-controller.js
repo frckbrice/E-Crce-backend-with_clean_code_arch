@@ -45,9 +45,9 @@ const createblogPostController = ({ createBlogPostUseCaseHandler, dbBlogPostHand
 };
 
 // controller to find one blog post
-const findOneblogPostController = ({ findOneBlogPostUseCaseHandler, dbBlogPostHandler, errorHandlers, makeHttpError, logEvents }) => async function findOneblogPostControllerHandler(httpRequest) {
+const findOneblogPostController = ({ findOneBlogPostUseCaseHandler, dbBlogPostHandler, makeHttpError, logEvents }) => async function findOneblogPostControllerHandler(httpRequest) {
 
-    console.log("hit find all blog posts controller ")
+    console.log("hit find single blog posts controller ")
     const { blogId } = httpRequest.params;
 
     if (!blogId) {
@@ -58,6 +58,8 @@ const findOneblogPostController = ({ findOneBlogPostUseCaseHandler, dbBlogPostHa
     }
     try {
         const { blogPost, statusCode } = await findOneBlogPostUseCaseHandler({ blogPostId: blogId, logEvents, findOneBlogPostDbHandler: dbBlogPostHandler.findOneBlogPostDbHandler });
+
+        console.log("from find single blog post: ", blogPost)
         return {
             headers: {
                 'Content-Type': 'application/json',
@@ -79,7 +81,7 @@ const findOneblogPostController = ({ findOneBlogPostUseCaseHandler, dbBlogPostHa
 // create controller to find all blog posts 
 const findAllblogPostController = ({ dbBlogPostHandler, findAllBlogPostUseCaseHandler, logEvents }) => async function findAllblogPostControllerHandler(httpRequest) {
 
-    const filterOptions = { page = 1, perPage = 10, tags =[], author = '', category = "", searchTerm = "" } = httpRequest.query;
+    const filterOptions = { page, perPage, tags =[], author = '', category = "", searchTerm = "" } = httpRequest.query;
     try {
         const { updatedBlogPost,
             statusCode } = await findAllBlogPostUseCaseHandler({ logEvents, findAllBlogPostsDbHandler: dbBlogPostHandler.findAllBlogPostsDbHandler, filterOptions });
@@ -168,20 +170,35 @@ const deleteBlogPostController = ({ deleteBlogPostUseCaseHandler, makeHttpError,
 }
 
 // rate a blog controller
-const rateblogPostController = ({ rateBlogPostUseCaseHandler, makeHttpError, dbBlogHandler, logEvents }) => async ({ blogId, rating }) => {
+const rateBlogPostController = ({ dbBlogPostHandler, rateBlogPostUseCaseHandler, makeHttpError, logEvents, dbUserHandler }) => async (httpRequest) => {
 
-    console.log("hit rate controller ")
+    // console.log("hit rate controller ")
+    // get current connected user
+    const { user: { email } } = httpRequest;
+    const data = httpRequest.body;
+    // get the blog id
+    const { blogId } = httpRequest.params;
+    console.log("hit rate controller ", blogId, email, data)
 
-    if (!blogId || !rating)
+    if (!blogId || !email || (Object.keys(data).length === 0 && data.constructor === Object))
         return makeHttpError({
             statusCode: 400,
-            errorMessage: 'No blog Id or rating provided'
+            errorMessage: 'No blog Id or user connected'
         });
     try {
-        const { updatedBlogPost, statusCode } = await rateBlogPostUseCaseHandler({ blogPostId, rating, dbBlogHandler, logEvents });
+        const { updatedBlogPost, statusCode } = await rateBlogPostUseCaseHandler({
+            blogPostId: blogId,
+            email,
+            dbBlogPostHandler,
+            logEvents,
+            makeHttpError,
+            dbUserHandler,
+            data
+        });
+
         return {
             headers: { 'Content-Type': 'application/json', "x-content-type-options": "nosniff" },
-            statusCode,
+            statusCode: statusCode,
             data: updatedBlogPost
         };
     } catch (e) {
@@ -200,5 +217,5 @@ module.exports = () => Object.freeze({
     findAllblogPostController,
     deleteBlogPostController,
     updateblogPostController,
-    rateblogPostController
+    rateBlogPostController
 })
